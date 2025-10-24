@@ -7,8 +7,8 @@ import { fileURLToPath } from "url";
 import "express-async-errors";
 
 import queueRoutes from "./src/routes/queueRoutes.js";
-import { limiter } from "./src/middleware/rateLimiter.js";
-import { errorHandler } from "./src/middleware/errorhandler.js";
+import { limiter } from "./src/middlewares/rateLimiter.js";
+import { errorHandler } from "./src/middlewares/errorHandler.js";
 
 dotenv.config();
 const app = express();
@@ -17,22 +17,36 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Middleware
+// Core middleware
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
-app.get("/queue/status", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "queue.html"));
-  });  
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(limiter);
 
-// Routes
+// 📁 Gør dine frontend-filer tilgængelige (med undermapper)
+app.use("/css", express.static(path.join(__dirname, "public/css")));
+app.use("/js", express.static(path.join(__dirname, "public/js")));
+app.use("/html", express.static(path.join(__dirname, "public/html")));
+
+// 🏠 Forside
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/html", "index.html"));
+});
+
+// 📄 Køstatus-side
+app.get("/queue/status", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/html", "queue.html"));
+});
+
+// API-routes (backend)
 app.use("/queue", queueRoutes);
 
-// Error-handler (skal være sidst)
+// Global error-handler
 app.use(errorHandler);
 
 // Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server kører på port ${PORT}`));
+app.listen(PORT, () => {
+  console.log("✅ Forbundet til Redis");
+  console.log(`🚀 Server kører på port ${PORT}`);
+});

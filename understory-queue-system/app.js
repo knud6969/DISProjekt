@@ -20,6 +20,9 @@ const __dirname = path.dirname(__filename);
 // Middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+app.get("/queue/status", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "queue.html"));
+  });  
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(limiter);

@@ -1,0 +1,44 @@
+body {
+    font-family: system-ui, sans-serif;
+    background-color: #f6f8fa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+  
+  .container {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    text-align: center;
+    width: 320px;
+  }
+  
+  h1 {
+    color: #e63946;
+  }
+  
+  button {
+    margin-top: 15px;
+    background-color: #457b9d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #1d3557;
+  }
+  
+  #status {
+    margin-top: 15px;
+    font-weight: bold;
+    color: #333;
+  }
+  

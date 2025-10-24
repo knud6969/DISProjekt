@@ -1,4 +1,14 @@
 {
-  "name": "understory-queue-system",
-  "version": "1.0.0"
+  "name": "understory-queue",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.19.0",
+    "ioredis": "^5.4.1",
+    "dotenv": "^16.4.1"
+  }
 }

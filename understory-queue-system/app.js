@@ -7,8 +7,8 @@ import { fileURLToPath } from "url";
 import "express-async-errors";
 
 import queueRoutes from "./src/routes/queueRoutes.js";
-import { limiter } from "./src/middlewares/rateLimiter.js";
-import { errorHandler } from "./src/middlewares/errorHandler.js";
+import { limiter } from "./src/middleware/rateLimiter.js";
+import { errorHandler } from "./src/middleware/errorhandler.js";
 
 dotenv.config();
 const app = express();

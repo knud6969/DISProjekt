@@ -1,45 +1,35 @@
 import express from "express";
 import dotenv from "dotenv";
+import helmet from "helmet";
+import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
-import { enqueue, getPosition } from "./services/queueService.js";
+import "express-async-errors";
+
+import queueRoutes from "./src/routes/queueRoutes.js";
+import { limiter } from "./src/middlewares/rateLimiter.js";
+import { errorHandler } from "./src/middlewares/errorHandler.js";
 
 dotenv.config();
 const app = express();
-app.use(express.json());
 
+// Paths
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Serve static frontend
+// Middleware
+app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+app.use(helmet());
+app.use(morgan("dev"));
+app.use(limiter);
 
-// --- ROUTES ---
+// Routes
+app.use("/queue", queueRoutes);
 
-// Tilføj bruger til køen
-app.post("/queue/join", async (req, res) => {
-  const { userId } = req.body;
-  if (!userId) return res.status(400).json({ error: "userId mangler" });
-
-  try {
-    const position = await enqueue(userId);
-    res.json({ position });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Fejl ved køtilmelding" });
-  }
-});
-
-// Hent status
-app.get("/queue/status/:userId", async (req, res) => {
-  try {
-    const position = await getPosition(req.params.userId);
-    res.json({ position });
-  } catch (err) {
-    res.status(500).json({ error: "Kunne ikke hente køstatus" });
-  }
-});
+// Error-handler (skal være sidst)
+app.use(errorHandler);
 
 // Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Serveren kører på port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server kører på port ${PORT}`));

@@ -7,34 +7,30 @@ import {
 
 /**
  * POST /queue/join
- * Tilføjer en bruger til køen.
- * Returnerer position + redirectUrl (hvor brugeren skal ende efter køen)
+ * Tilføjer bruger til Redis-kø.
  */
 export async function joinQueue(req, res) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    console.warn("⚠️ Valideringsfejl i joinQueue:", errors.array());
+    console.warn("⚠️ Valideringsfejl:", errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
 
   try {
     const { userId } = req.body;
-
     if (!userId) {
-      console.warn("⚠️ userId mangler i body:", req.body);
       return res.status(400).json({ error: "userId mangler" });
     }
 
-    console.log(`📩 Modtog /queue/join request med userId: ${userId}`);
+    console.log(`📩 Ny /queue/join request fra ${userId}`);
 
-    // Midlertidig redirect til Understorys hjemmeside
+    // Midlertidigt redirectmål, som bruges når brugeren "kommer igennem"
     const redirectUrl = "https://understory.dk";
 
-    // Tilføj til Redis-kø med redirectUrl
     const position = await addToQueue(userId, redirectUrl);
+    console.log(`🟢 ${userId} tilføjet som nr. ${position}`);
 
-    console.log(`🟢 Bruger ${userId} tilføjet som nr. ${position} i køen`);
-
+    // Returnér kun data, ingen redirect endnu
     res.json({ position, redirectUrl });
   } catch (err) {
     console.error("❌ Fejl i joinQueue:", err);
@@ -44,26 +40,19 @@ export async function joinQueue(req, res) {
 
 /**
  * GET /queue/status/:userId
- * Returnerer aktuel position i køen og estimeret ventetid.
+ * Returnerer position og estimeret ventetid.
  */
 export async function getQueueStatus(req, res) {
   try {
     const { userId } = req.params;
-    console.log(`🔍 Forespørger status for bruger: ${userId}`);
-
     const position = await getUserPosition(userId);
     if (position === null) {
-      console.warn(`⚠️ Bruger ${userId} findes ikke i køen`);
       return res.status(404).json({ error: "Bruger findes ikke i køen" });
     }
 
     const queueLength = await getQueueLength();
     const ahead = position - 1;
-    const estTime = ahead * 5; // Simuleret ventetid (5 sek pr. bruger)
-
-    console.log(
-      `📊 Køstatus: Bruger ${userId} er nr. ${position} (${ahead} foran, est. ${estTime}s)`
-    );
+    const estTime = ahead * 5; // sekunder pr. bruger
 
     res.json({ position, ahead, estTime });
   } catch (err) {

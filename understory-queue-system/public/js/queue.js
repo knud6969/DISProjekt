@@ -6,17 +6,21 @@ async function fetchStatus() {
   const data = await res.json();
 
   if (res.ok) {
+    const info = document.getElementById("queueInfo");
+
     if (data.ahead <= 0) {
-      console.log("🎉 Du er igennem køen!");
-      window.location.href = "https://understory.dk"; // eller dynamisk
+      info.textContent = "🎉 Du er nu igennem køen! Sender dig videre...";
+      // Vent et sekund og redirect til Understory
+      setTimeout(() => {
+        window.location.href = "https://understory.dk";
+      }, 1500);
       return;
     }
 
-    document.getElementById("queueInfo").textContent =
-      `Du er nr. ${data.position} i køen (${data.ahead} foran dig). 
+    info.textContent = `Du er nr. ${data.position} i køen (${data.ahead} foran dig). 
       Estimeret ventetid: ${data.estTime}s`;
   } else {
-    document.getElementById("queueInfo").textContent = "Fejl ved hentning af status.";
+    console.error("Kunne ikke hente køstatus:", data.error);
   }
 }
 

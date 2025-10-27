@@ -72,7 +72,10 @@ io.on("connection", (socket) => {
   );
 });
 
+// --- PORT SETUP (Fleksibel til PM2 load balancing) ---
 const PORT = process.env.PORT || process.argv[2] || 3000;
+
+// --- START SERVER ---
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server kører på port ${PORT}, PID: ${process.pid}`);
 });

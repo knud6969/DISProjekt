@@ -7,7 +7,7 @@ const SERVED_KEY = "served_users";
 // 🔁 Hjælpefunktion – sender hele køen til alle forbundne klienter
 async function broadcastQueue(io) {
   try {
-    const list = await redis.lRange(QUEUE_KEY, 0, -1);
+    const list = await redis.lrange(QUEUE_KEY, 0, -1);
     const queue = list.map((item, i) => {
       const u = JSON.parse(item);
       return { id: u.id, position: i + 1 };
@@ -24,7 +24,7 @@ async function processQueue() {
   const io = getIO();
 
   try {
-    const userData = await redis.lPop(QUEUE_KEY);
+    const userData = await redis.lpop(QUEUE_KEY);
 
     if (!userData) {
       io.emit("queue:update", { type: "idle" });

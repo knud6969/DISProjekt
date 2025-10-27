@@ -7,34 +7,30 @@ import {
 import { getIO } from "../config/socketInstance.js";
 
 export async function joinQueue(req, res) {
-  const errors = validationResult(req);
-  if (!errors.isEmpty())
-    return res.status(400).json({ errors: errors.array() });
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ error: "userId mangler" });
 
-  try {
-    const { userId } = req.body;
-    if (!userId)
-      return res.status(400).json({ error: "userId mangler i request" });
+  const redirectUrl = "https://understory.dk";
+  const position = await addToQueue(userId, redirectUrl);
+  const queueLength = await getQueueLength();
 
-    const redirectUrl = "https://understory.dk";
-    const position = await addToQueue(userId, redirectUrl);
-    const queueLength = await getQueueLength();
+  const io = getIO();
+  const list = await redis.lrange("user_queue", 0, -1);
+  const queue = list.map((x, i) => {
+    const u = JSON.parse(x);
+    return { id: u.id, position: i + 1 };
+  });
+  io.emit("queue:fullUpdate", queue);
+  io.emit("queue:update", {
+    type: "joined",
+    userId,
+    position,
+    queueLength,
+  });
 
-    const io = getIO();
-    io.emit("queue:update", {
-      type: "joined",
-      userId,
-      position,
-      queueLength,
-    });
-
-    console.log(`🟢 Bruger ${userId} tilføjet som nr. ${position}`);
-    res.json({ position });
-  } catch (err) {
-    console.error("❌ Fejl i joinQueue:", err);
-    res.status(500).json({ error: "Serverfejl" });
-  }
+  res.json({ position });
 }
+
 
 export async function getQueueStatus(req, res) {
   try {

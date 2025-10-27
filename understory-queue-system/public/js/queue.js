@@ -7,7 +7,8 @@ if (!userId) {
   window.location.href = "/";
 }
 
-// Socket.IO events
+// ------------------ Socket.IO events ------------------
+
 socket.on("connect", () => {
   console.log("✅ Forbundet til Socket.IO-server:", socket.id);
   queueInfo.textContent = "✅ Forbundet til serveren – venter på køstatus...";
@@ -17,6 +18,28 @@ socket.on("connected", (msg) => {
   console.log("🔌 Server siger:", msg);
 });
 
+// Når hele kølisten sendes (live opdatering)
+socket.on("queue:fullUpdate", (queue) => {
+  console.log("📡 Fuld køopdatering:", queue);
+
+  // Hvis ingen kø => redirect direkte
+  if (!queue.length) {
+    queueInfo.textContent = "🚀 Ingen kø – du sendes videre...";
+    setTimeout(() => (window.location.href = "https://understory.dk"), 1500);
+    return;
+  }
+
+  // Find min placering i køen
+  const me = queue.find((u) => u.id === userId);
+  if (me) {
+    const ahead = me.position - 1;
+    queueInfo.textContent = `📊 Du er nr. ${me.position} i køen (${ahead} foran dig)`;
+  } else {
+    queueInfo.textContent = "⏳ Du er ikke længere i køen (muligvis færdig)";
+  }
+});
+
+// Når der sker ændringer i køen (join / process / idle)
 socket.on("queue:update", (data) => {
   console.log("📡 Event modtaget:", data);
 
@@ -34,10 +57,12 @@ socket.on("queue:update", (data) => {
 
   if (data.type === "idle") {
     queueInfo.textContent = "⏸️ Ingen i køen lige nu.";
+    setTimeout(() => (window.location.href = "https://understory.dk"), 2000);
   }
 });
 
-// Tjek status med backend, så vi kan fange 404 (ikke i køen)
+// ------------------ Første backend-status-check ------------------
+
 (async function checkQueueStatus() {
   try {
     const res = await fetch(`/queue/status/${userId}`);

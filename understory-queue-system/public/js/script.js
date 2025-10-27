@@ -26,10 +26,10 @@ joinBtn.addEventListener("click", async () => {
     const data = await res.json();
 
     if (res.ok) {
-      // gem brugerens ID lokalt og send videre til køstatus
       localStorage.setItem("userId", userId);
-      window.location.href = "/queue/status";
-    } else {
+      window.location.href = `/queue/status?userId=${userId}`;
+    }
+     else {
       statusDiv.textContent = "Fejl: " + (data.error || "Ukendt fejl");
     }
   } catch (err) {

@@ -7,7 +7,7 @@ import { fileURLToPath } from "url";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import "express-async-errors";
-
+import { checkQueueAccess } from "./src/middleware/checkQueueAccess.js";
 import queueRoutes from "./src/routes/queueRoutes.js";
 import { limiter } from "./src/middleware/rateLimiter.js";
 import { errorHandler } from "./src/middleware/errorhandler.js";
@@ -47,11 +47,7 @@ app.get("/", (req, res) => {
 });
 
 // 📄 Køstatus-side
-app.get("/queue/status", (req, res) => {
-  const hasUser = req.query.userId; // hvis du senere vil sende ?userId=xyz
-  if (!hasUser) {
-    return res.redirect("/"); // sender tilbage til forsiden
-  }
+app.get("/queue/status", checkQueueAccess, (req, res) => {
   res.sendFile(path.join(__dirname, "public/html", "queue.html"));
 });
 

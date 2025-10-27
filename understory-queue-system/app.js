@@ -19,7 +19,14 @@ const __dirname = path.dirname(__filename);
 
 // Core middleware
 app.use(express.json());
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false,
+    hsts: false, // <- Deaktiver Strict-Transport-Security
+  })
+);
 app.use(morgan("dev"));
 app.use(limiter);
 

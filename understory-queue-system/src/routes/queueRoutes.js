@@ -2,10 +2,7 @@
 import { Router } from "express";
 import { joinQueue, getQueueStatus, claim } from "../controllers/queueController.js";
 import { forceReady } from "../controllers/queueController.js";
-import { joinLimiter, statusLimiter, ipBanCheck } from "../middleware/rateLimit.js";
-
-
-
+import { joinLimiter, statusLimiter, ipBanCheck } from "../middleware/rateLimiter.js";
 
 const router = Router();
 

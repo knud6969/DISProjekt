@@ -65,7 +65,7 @@ io.on("connection", (socket) => {
 });
 
 // ---------- PORT + STARTUP ----------
-const PORT = process.env.PORT || process.argv[2] || 3000;
+const PORT = process.argv[2] || 3000;
 
 (async () => {
   try {

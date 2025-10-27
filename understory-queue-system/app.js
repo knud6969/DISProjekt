@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
+import rateLimit from "express-rate-limit";
 import { fileURLToPath } from "url";
 import { createServer } from "http";
 import { Server } from "socket.io";
@@ -21,6 +22,12 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 initSocketIO(io); // Gør Socket.IO globalt
+
+const queueLimiter = rateLimit({
+  windowMs: 10 * 1000, // 10 sekunder
+  limit: 100,          // max 100 requests pr. IP per 10 sek.
+  message: { error: "For mange forespørgsler – prøv igen om lidt." },
+});
 
 // ---------- PATH SETUP ----------
 const __filename = fileURLToPath(import.meta.url);
@@ -51,6 +58,11 @@ app.get("/", (req, res) => {
 app.get("/queue/status", checkQueueAccess, (req, res) => {
   res.sendFile(path.join(__dirname, "public/html", "queue.html"));
 });
+
+
+
+app.use("/queue/join", queueLimiter);
+
 app.use("/queue", queueRoutes);
 app.use(errorHandler);
 

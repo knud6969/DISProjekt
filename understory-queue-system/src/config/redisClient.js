@@ -4,10 +4,11 @@ dotenv.config();
 
 const redisUrl = process.env.REDIS_URL || "redis://127.0.0.1:6379";
 
-export const redis = new Redis(redisUrl, {
-  retryStrategy: (times) => Math.min(times * 500, 10000),
-  reconnectOnError: () => true,
-  maxRetriesPerRequest: null,
+export const redis = new Redis({
+  maxRetriesPerRequest: 5,
+  enableOfflineQueue: true,
+  connectTimeout: 5000,
+  retryStrategy: (times) => Math.min(times * 50, 2000),
 });
 
 redis.on("connect", () => console.log("✅ Forbundet til Redis"));

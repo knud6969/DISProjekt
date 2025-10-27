@@ -21,9 +21,11 @@ function renderPending({ position, ahead, etaSeconds }) {
 }
 
 function redirectReady() {
+  console.log("🎉 READY – redirecter nu til /done");
   queueInfo.textContent = "🎉 Du er igennem køen! Sender dig videre…";
-  window.location.href = "/done"; // fast, simpel redirect
+  window.location.href = "/done";
 }
+
 
 
 // Polling m. jitter + backoff + visibility-awareness

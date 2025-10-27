@@ -1,5 +1,20 @@
 // src/controllers/queueController.js
 import { enqueueIfAbsent, getStatus, issueOneTimeToken, claimToken } from "../models/queueModel.js";
+// TEST ONLY: Force a user ready (remove in production)
+import { redis } from "../config/redisClient.js";
+
+export async function forceReady(req, res) {
+  try {
+    const { userId } = req.params;
+    if (!userId) return res.status(400).json({ error: "userId mangler" });
+
+    await redis.hset(`queue:user:${userId}`, { status: "ready", redirectUrl: process.env.QUEUE_REDIRECT_URL || "" });
+    return res.json({ ok: true, forced: userId });
+  } catch (e) {
+    console.error("forceReady error:", e);
+    return res.status(500).json({ error: "forceReady serverfejl" });
+  }
+}
 
 const REDIRECT_URL = process.env.QUEUE_REDIRECT_URL || "https://lamineyamalerenwanker.app";
 

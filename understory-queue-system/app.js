@@ -12,18 +12,22 @@ import queueRoutes from "./src/routes/queueRoutes.js";
 import { limiter } from "./src/middleware/rateLimiter.js";
 import { errorHandler } from "./src/middleware/errorhandler.js";
 import { initSocketIO } from "./src/config/socketInstance.js";
+import { connectRedis } from "./src/config/redisClient.js";
+import { startWorker } from "./src/worker.js";
 
 dotenv.config();
 const app = express();
 const server = createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
-initSocketIO(io); // Gør Socket.IO tilgængelig globalt
 
-// Paths
+// ---------- SOCKET.IO INITIALISERING ----------
+initSocketIO(io); // gør io globalt tilgængelig via getIO()
+
+// ---------- PATHS ----------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Core middleware
+// ---------- CORE MIDDLEWARE ----------
 app.use(express.json());
 app.use(
   helmet({
@@ -36,37 +40,53 @@ app.use(
 app.use(morgan("dev"));
 app.use(limiter);
 
-// 📁 Statisk frontend
+// ---------- STATISKE FILER ----------
 app.use("/css", express.static(path.join(__dirname, "public/css")));
 app.use("/js", express.static(path.join(__dirname, "public/js")));
 app.use("/html", express.static(path.join(__dirname, "public/html")));
 
-// 🏠 Forside
+// ---------- HTML ROUTES ----------
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public/html", "index.html"));
 });
 
-// 📄 Køstatus-side
 app.get("/queue/status", checkQueueAccess, (req, res) => {
   res.sendFile(path.join(__dirname, "public/html", "queue.html"));
 });
 
-
-
-// API routes
+// ---------- API ROUTES ----------
 app.use("/queue", queueRoutes);
 
-// Fejlhåndtering
+// ---------- FEJLHÅNDTERING ----------
 app.use(errorHandler);
 
-// Socket.IO
+// ---------- SOCKET.IO EVENTS ----------
 io.on("connection", (socket) => {
   console.log("🟢 Ny Socket.IO-forbindelse:", socket.id);
   socket.emit("connected", { message: "Forbundet til køsystemet" });
+
+  socket.on("disconnect", () => {
+    console.log("🔴 Socket frakoblet:", socket.id);
+  });
 });
 
-// Start server
+// ---------- START SERVER + REDIS + WORKER ----------
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`🚀 Server kører på port ${PORT}`);
-});
+
+(async () => {
+  try {
+    // Forbind til Redis først
+    await connectRedis();
+
+    // Start server
+    server.listen(PORT, () => {
+      console.log(`🚀 Server kører på port ${PORT}`);
+    });
+
+    // Start worker som håndterer køen automatisk
+    startWorker(io);
+  } catch (err) {
+    console.error("❌ Kunne ikke starte server:", err);
+    process.exit(1);
+  }
+})();

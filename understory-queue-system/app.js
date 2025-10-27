@@ -12,15 +12,15 @@ import queueRoutes from "./src/routes/queueRoutes.js";
 import { limiter } from "./src/middleware/rateLimiter.js";
 import { errorHandler } from "./src/middleware/errorhandler.js";
 import { initSocketIO } from "./src/config/socketInstance.js";
-import { connectRedis } from "./src/config/redisClient.js";
-import { startWorker } from "./src/workers/queueWorker.js";
+import { redis } from "./src/config/redisClient.js";
+import { startQueueWorker } from "./src/queueWorker.js";
 
 dotenv.config();
+
+// ---------- OPSÆT SERVER OG SOCKET.IO ----------
 const app = express();
 const server = createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
-
-// ---------- SOCKET.IO INITIALISERING ----------
 initSocketIO(io); // gør io globalt tilgængelig via getIO()
 
 // ---------- PATHS ----------
@@ -70,21 +70,22 @@ io.on("connection", (socket) => {
   });
 });
 
-// ---------- START SERVER + REDIS + WORKER ----------
+// ---------- START SERVER OG WORKER ----------
 const PORT = process.env.PORT || 3000;
 
 (async () => {
   try {
-    // Forbind til Redis først
-    await connectRedis();
+    // Test at Redis er tilgængelig
+    await redis.ping();
+    console.log("🧠 Redis forbindelse verificeret via ping()");
 
-    // Start server
-    server.listen(PORT, () => {
+    // Start Socket.IO worker
+    startQueueWorker(io);
+
+    // Start Express-serveren
+    server.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Server kører på port ${PORT}`);
     });
-
-    // Start worker som håndterer køen automatisk
-    startWorker(io);
   } catch (err) {
     console.error("❌ Kunne ikke starte server:", err);
     process.exit(1);

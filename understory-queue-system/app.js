@@ -48,8 +48,14 @@ app.get("/", (req, res) => {
 
 // 📄 Køstatus-side
 app.get("/queue/status", (req, res) => {
+  const hasUser = req.query.userId; // hvis du senere vil sende ?userId=xyz
+  if (!hasUser) {
+    return res.redirect("/"); // sender tilbage til forsiden
+  }
   res.sendFile(path.join(__dirname, "public/html", "queue.html"));
 });
+
+
 
 // API routes
 app.use("/queue", queueRoutes);

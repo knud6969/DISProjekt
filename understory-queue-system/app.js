@@ -13,7 +13,7 @@ import { limiter } from "./src/middleware/rateLimiter.js";
 import { errorHandler } from "./src/middleware/errorhandler.js";
 import { initSocketIO } from "./src/config/socketInstance.js";
 import { connectRedis } from "./src/config/redisClient.js";
-import { startWorker } from "./src/queueWorker.js";
+import { startWorker } from "./src/workers/queueWorker.js";
 
 dotenv.config();
 const app = express();

@@ -1,18 +1,26 @@
 <!DOCTYPE html>
 <html lang="da">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Understory Queue</title>
-  <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-  <div class="container">
-    <h1>⚠️ Høj trafik</h1>
-    <p>Understory oplever i øjeblikket stor efterspørgsel.<br>For at sikre fair adgang beder vi dig deltage i køen.</p>
-    <button id="joinBtn">Tilmeld kø</button>
-    <div id="status"></div>
-  </div>
-  <script src="/js/script.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Understory Køsystem</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>⚡ Understory Køsystem</h1>
+      <p>
+        Der er i øjeblikket høj belastning på Understory.<br />
+        Klik nedenfor for at tilmelde dig køen.
+      </p>
+
+      <button id="joinBtn">Tilmeld kø</button>
+      <p id="status"></p>
+    </div>
+
+    <!-- Socket.IO klient skal altid komme før dit eget script -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="/js/script.js"></script>
+  </body>
 </html>

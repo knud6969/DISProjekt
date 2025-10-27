@@ -7,87 +7,82 @@ import { fileURLToPath } from "url";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import "express-async-errors";
-import { checkQueueAccess } from "./src/middleware/checkQueueAccess.js";
-import queueRoutes from "./src/routes/queueRoutes.js";
+
 import { limiter } from "./src/middleware/rateLimiter.js";
 import { errorHandler } from "./src/middleware/errorhandler.js";
 import { initSocketIO } from "./src/config/socketInstance.js";
 import { redis } from "./src/config/redisClient.js";
+import queueRoutes from "./src/routes/queueRoutes.js";
 import { startQueueWorker } from "./src/workers/queueWorker.js";
 
 dotenv.config();
 
-// ---------- OPSÆT SERVER OG SOCKET.IO ----------
 const app = express();
 const server = createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
-initSocketIO(io); // gør io globalt tilgængelig via getIO()
+initSocketIO(io);
 
-// ---------- PATHS ----------
+// Paths
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ---------- CORE MIDDLEWARE ----------
-app.use(express.json());
+// Core middleware
+app.use(express.json({ limit: "256kb" }));
 app.use(
   helmet({
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
     crossOriginOpenerPolicy: false,
-    hsts: false,
+    hsts: true,
   })
 );
-app.use(morgan("dev"));
+app.use(morgan("combined"));
 app.use(limiter);
 
-// ---------- STATISKE FILER ----------
+// Statics
 app.use("/css", express.static(path.join(__dirname, "public/css")));
 app.use("/js", express.static(path.join(__dirname, "public/js")));
 app.use("/html", express.static(path.join(__dirname, "public/html")));
 
-// ---------- HTML ROUTES ----------
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public/html", "index.html"));
-});
+// HTML routes
+app.get("/", (_req, res) =>
+  res.sendFile(path.join(__dirname, "public/html", "index.html"))
+);
+app.get("/favicon.ico", (_req, res) => res.status(204).end()); // undgå 404 spam
 
-app.get("/queue/status", checkQueueAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, "public/html", "queue.html"));
-});
-
-// ---------- API ROUTES ----------
+// API
 app.use("/queue", queueRoutes);
 
-// ---------- FEJLHÅNDTERING ----------
+// Error handler (skal ligge sidst)
 app.use(errorHandler);
 
-// ---------- SOCKET.IO EVENTS ----------
+// Socket.IO debug
 io.on("connection", (socket) => {
-  console.log("🟢 Ny Socket.IO-forbindelse:", socket.id);
+  console.log("🟢 Socket.IO connected:", socket.id);
   socket.emit("connected", { message: "Forbundet til køsystemet" });
-
-  socket.on("disconnect", () => {
-    console.log("🔴 Socket frakoblet:", socket.id);
-  });
+  socket.on("disconnect", (reason) =>
+    console.log("🔴 Socket disconnected:", socket.id, reason)
+  );
 });
 
-// ---------- START SERVER OG WORKER ----------
 const PORT = process.env.PORT || 3000;
 
+// Boot
 (async () => {
   try {
-    // Test at Redis er tilgængelig
-    await redis.ping();
-    console.log("🧠 Redis forbindelse verificeret via ping()");
+    // Verificér Redis
+    const pong = await redis.ping();
+    console.log("🧠 Redis ping:", pong);
 
-    // Start Socket.IO worker
-    startQueueWorker(io);
+    // Start worker (kører 1 interval globalt)
+    startQueueWorker();
 
-    // Start Express-serveren
-    server.listen(PORT, "0.0.0.0", () => {
-      console.log(`🚀 Server kører på port ${PORT}`);
-    });
+    // Start HTTP server
+    server.listen(PORT, "0.0.0.0", () =>
+      console.log(`🚀 Server kører på port ${PORT}`)
+    );
   } catch (err) {
-    console.error("❌ Kunne ikke starte server:", err);
+    console.error("❌ Startup-fejl:", err);
     process.exit(1);
   }
 })();

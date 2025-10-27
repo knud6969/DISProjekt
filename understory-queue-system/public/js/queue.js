@@ -1,29 +1,37 @@
-const socket = io();
-const queueInfo = document.getElementById("queueInfo");
+console.log("✅ queue.js er loadet");
 
+const queueInfo = document.getElementById("queueInfo");
 const userId = localStorage.getItem("userId");
+
 if (!userId) {
-  console.warn("🚫 Ingen bruger-id fundet, sender tilbage til forsiden.");
+  console.warn("🚫 Ingen user-id fundet, sender tilbage til forsiden.");
   window.location.href = "/";
 }
+
+const BASE_URL = window.location.origin;
+const socket = io(BASE_URL, { transports: ["websocket"], reconnection: true });
 
 // ------------------ Socket.IO events ------------------
 
 socket.on("connect", () => {
-  console.log("✅ Forbundet til Socket.IO-server:", socket.id);
-  queueInfo.textContent = "✅ Forbundet til serveren – venter på køstatus...";
+  console.log("🟢 Forbundet til Socket.IO:", socket.id);
+  queueInfo.textContent = "Forbundet til serveren – venter på køstatus...";
 });
 
-// Når hele kølisten sendes (live opdatering)
+socket.on("disconnect", (reason) => {
+  console.warn("🔴 Socket afbrudt:", reason);
+  queueInfo.textContent = "Forbindelsen blev afbrudt – prøver igen...";
+});
+
+socket.io.on("reconnect", () => {
+  console.log("♻️ Socket genoprettet");
+  queueInfo.textContent = "Forbundet igen – henter ny køstatus...";
+  updateStatus();
+});
+
+// Hele kølisten (live opdatering)
 socket.on("queue:fullUpdate", (queue) => {
   console.log("📡 Fuld køopdatering:", queue);
-
-  if (!queue.length) {
-    queueInfo.textContent = "🚀 Ingen kø – du sendes videre...";
-    setTimeout(() => (window.location.href = "https://understory.dk"), 1500);
-    return;
-  }
-
   const me = queue.find((u) => u.id === userId);
   if (me) {
     const ahead = me.position - 1;
@@ -33,47 +41,51 @@ socket.on("queue:fullUpdate", (queue) => {
   }
 });
 
-// Når der sker ændringer i køen (join / process / idle)
+// Enkeltopdateringer
 socket.on("queue:update", (data) => {
-  console.log("📡 Event modtaget:", data);
-
+  console.log("📡 queue:update:", data);
   switch (data.type) {
     case "joined":
-      queueInfo.textContent = `👥 Ny bruger tilføjet – kølængde: ${data.queueLength}`;
+      queueInfo.textContent = `🙌 Du er nu i køen som nr. ${data.position}`;
       break;
-
     case "processed":
-      if (userId === data.userId) {
+      if (data.userId === userId) {
         queueInfo.textContent = "🎉 Du er igennem køen! Sender dig videre...";
         setTimeout(() => (window.location.href = data.redirectUrl), 2000);
       } else {
         queueInfo.textContent = `✅ Bruger ${data.userId} færdigbehandlet`;
       }
       break;
-
     case "idle":
       queueInfo.textContent = "⏸️ Ingen i køen lige nu.";
-      setTimeout(() => (window.location.href = "https://understory.dk"), 2000);
+      setTimeout(() => (window.location.href = "https://lamineyamalerenwanker.app"), 2000);
       break;
-
     default:
-      console.warn("⚠️ Ukendt queue:update-type:", data.type);
+      console.warn("⚠️ Ukendt update-type:", data.type);
   }
 });
 
-// ------------------ Fejl- og disconnect-håndtering ------------------
+// ------------------ Køstatus ------------------
 
-socket.on("disconnect", (reason) => {
-  console.warn("🔴 Socket.IO afbrudt:", reason);
-  queueInfo.textContent = "⚠️ Forbindelse tabt – forsøger at genoprette...";
-});
+async function updateStatus() {
+  try {
+    const res = await fetch(`/queue/status/${userId}`);
+    if (!res.ok) {
+      console.warn("🚫 Bruger ikke fundet – sender til forsiden");
+      window.location.href = "/";
+      return;
+    }
+    const data = await res.json();
+    console.log("📊 Aktuel status:", data);
+    queueInfo.textContent = `📊 Du er nr. ${data.position} i køen (${data.ahead} foran dig)`;
+  } catch (err) {
+    console.error("❌ Fejl ved status-check:", err);
+    queueInfo.textContent = "⚠️ Kunne ikke hente status – prøver igen...";
+    setTimeout(updateStatus, 5000);
+  }
+}
 
-socket.io.on("reconnect", () => {
-  console.log("🔁 Socket.IO genoprettet");
-  queueInfo.textContent = "🔁 Forbindelse genoprettet – opdaterer køstatus...";
-});
-
-// ------------------ Tilmeld brugeren køen ------------------
+// ------------------ Tilmeld brugeren ------------------
 
 (async function joinQueue() {
   try {
@@ -83,38 +95,15 @@ socket.io.on("reconnect", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId }),
     });
-
-    if (!res.ok) {
-      throw new Error(`Fejl fra server: ${res.status}`);
-    }
-
+    if (!res.ok) throw new Error(`Serverfejl: ${res.status}`);
     const data = await res.json();
     console.log("✅ Tilføjet til køen:", data);
     queueInfo.textContent = `🙌 Du er nu i køen som nr. ${data.position}`;
   } catch (err) {
-    console.error("❌ Fejl ved tilmelding til kø:", err);
-    queueInfo.textContent =
-      "❌ Kunne ikke tilmelde dig køen – prøv at genindlæse siden.";
+    console.error("❌ Fejl ved tilmelding:", err);
+    queueInfo.textContent = "❌ Kunne ikke tilmelde dig køen – prøv igen.";
   }
 })();
 
-// ------------------ Første backend-status-check ------------------
-
-(async function checkQueueStatus() {
-  try {
-    const res = await fetch(`/queue/status/${userId}`);
-    if (!res.ok) {
-      console.warn("🚫 Bruger ikke fundet i køen – redirecter til forsiden");
-      window.location.href = "/";
-      return;
-    }
-
-    const data = await res.json();
-    console.log("📊 Aktuel køstatus:", data);
-  } catch (err) {
-    console.error("❌ Fejl ved status-check:", err);
-    queueInfo.textContent =
-      "⚠️ Kunne ikke hente status – prøver igen om lidt...";
-    setTimeout(() => window.location.reload(), 4000);
-  }
-})();
+// Første statusopslag
+updateStatus();

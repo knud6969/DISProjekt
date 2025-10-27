@@ -4,14 +4,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Køstatus</title>
+
     <link rel="stylesheet" href="/css/style.css" />
     <script src="/socket.io/socket.io.js"></script>
+
+    <!-- Queue-status script -->
     <script defer src="/js/queue.js"></script>
   </head>
+
   <body>
     <div class="container">
-      <h1>Køstatus</h1>
+      <h1>🕓 Køstatus</h1>
       <p id="queueInfo">Forbinder til server...</p>
+
+      <div id="extraInfo" class="hidden">
+        <p id="positionInfo"></p>
+        <p id="timeInfo"></p>
+      </div>
+
+      <button id="leaveBtn" class="hidden">Forlad køen</button>
     </div>
+
+    <footer>
+      <p style="font-size: 0.8em; color: gray">
+        Understory Køsystem &copy; 2025
+      </p>
+    </footer>
   </body>
 </html>

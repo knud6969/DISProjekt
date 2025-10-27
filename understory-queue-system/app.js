@@ -50,6 +50,11 @@ app.get("/", (_req, res) =>
 );
 app.get("/favicon.ico", (_req, res) => res.status(204).end()); // undgå 404 spam
 
+// 📄 Køstatus-side
+app.get("/queue/status", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/html", "queue.html"));
+});
+
 // API
 app.use("/queue", queueRoutes);
 

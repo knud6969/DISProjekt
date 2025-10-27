@@ -89,7 +89,7 @@ joinBtn.addEventListener("click", async () => {
     localStorage.setItem("userId", userId);
 
     // Redirect til korrekt køstatus-URL (param som path)
-    window.location.href = `/queue/status/${userId}`;
+    window.location.href = `/queue/status?userId=${userId}`;
   } catch (err) {
     console.error("🌐 Fejl ved tilmelding:", err);
     statusDiv.textContent = "Kunne ikke tilmelde dig køen: " + err.message;

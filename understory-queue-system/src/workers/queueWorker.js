@@ -1,69 +1,67 @@
+// src/workers/queueWorker.js
 import { redis } from "../config/redisClient.js";
 import { getIO } from "../config/socketInstance.js";
 
 const QUEUE_KEY = "user_queue";
 const SERVED_KEY = "served_users";
 
-let intervalId = null;
-
-async function broadcastQueue() {
-  try {
-    const io = getIO();
-    const list = await redis.lrange(QUEUE_KEY, 0, -1);
-    const queue = list.map((x, i) => {
-      try {
-        const u = JSON.parse(x);
-        return { id: u.id, position: i + 1 };
-      } catch {
-        return { id: "ukendt", position: i + 1 };
-      }
-    });
-    io.emit("queue:fullUpdate", queue);
-  } catch (err) {
-    console.error("❌ Fejl i broadcastQueue:", err);
-  }
+// Hjælpefunktion – broadcaster køstatus
+async function broadcastQueue(io) {
+  const list = await redis.lrange(QUEUE_KEY, 0, -1);
+  const queue = list.map((x, i) => {
+    const u = JSON.parse(x);
+    return { id: u.id, position: i + 1 };
+  });
+  io.emit("queue:fullUpdate", queue);
 }
 
-async function processQueueTick() {
-  const io = getIO();
-  try {
-    const userData = await redis.lpop(QUEUE_KEY);
-    if (!userData) {
-      io.emit("queue:update", { type: "idle" });
-      return;
-    }
+// Funktion der behandler 10 brugere ad gangen
+async function processBatch(io) {
+  const batchSize = 10;
 
-    let user;
-    try {
-      user = JSON.parse(userData);
-    } catch {
-      console.warn("⚠️ Kunne ikke parse kø-element, skipper");
-      return;
-    }
+  const batch = [];
+  for (let i = 0; i < batchSize; i++) {
+    const data = await redis.lpop(QUEUE_KEY);
+    if (!data) break;
+    batch.push(JSON.parse(data));
+  }
 
-    console.log(`🎟️ Behandler bruger: ${user.id}`);
-    await new Promise((r) => setTimeout(r, 3000)); // simulér behandling
+  if (batch.length === 0) {
+    io.emit("queue:update", { type: "idle" });
+    return;
+  }
 
+  for (const user of batch) {
+    console.log(`🎟️ Behandler ${user.id}`);
     await redis.rpush(SERVED_KEY, JSON.stringify(user));
     io.emit("queue:update", {
       type: "processed",
       userId: user.id,
       redirectUrl: user.redirectUrl,
     });
-
-    await broadcastQueue();
-  } catch (err) {
-    console.error("❌ Fejl i processQueueTick:", err);
   }
+
+  await broadcastQueue(io);
 }
 
 export function startQueueWorker() {
-  if (intervalId) {
-    console.log("ℹ️ QueueWorker kører allerede");
-    return;
-  }
-  console.log("⚙️ QueueWorker startet – overvåger køen...");
-  // Første broadcast når worker starter
-  broadcastQueue().catch((e) => console.error("❌ Første broadcast fejlede:", e));
-  intervalId = setInterval(processQueueTick, 3000);
+  const io = getIO();
+  console.log("⚙️ QueueWorker startet – behandler 10 brugere hvert 20. sekund");
+
+  setInterval(async () => {
+    try {
+      await processBatch(io);
+    } catch (err) {
+      console.error("❌ Fejl i batch-process:", err);
+    }
+  }, 20000); // 20 sekunder
+
+  // Initial statusudsendelse hver 10 sek.
+  setInterval(async () => {
+    try {
+      await broadcastQueue(io);
+    } catch (err) {
+      console.error("❌ Fejl i broadcastQueue:", err);
+    }
+  }, 10000);
 }

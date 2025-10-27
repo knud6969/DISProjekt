@@ -65,7 +65,9 @@ io.on("connection", (socket) => {
 });
 
 // ---------- PORT + STARTUP ----------
-const PORT = process.argv[2] || 3000;
+const portFlagIndex = process.argv.findIndex(arg => arg === "--port");
+const PORT = portFlagIndex !== -1 ? process.argv[portFlagIndex + 1] : 3000;
+
 
 (async () => {
   try {

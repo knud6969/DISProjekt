@@ -1,99 +1,78 @@
+// app.js
 import express from "express";
-import dotenv from "dotenv";
-import helmet from "helmet";
-import morgan from "morgan";
 import path from "path";
-import rateLimit from "express-rate-limit";
 import { fileURLToPath } from "url";
-import { createServer } from "http";
-import { Server } from "socket.io";
-import "express-async-errors";
-import { checkQueueAccess } from "./src/middleware/checkQueueAccess.js";
-import queueRoutes from "./src/routes/queueRoutes.js";
-import { limiter } from "./src/middleware/rateLimiter.js";
-import { errorHandler } from "./src/middleware/errorhandler.js";
-import { initSocketIO } from "./src/config/socketInstance.js";
-import { redis } from "./src/config/redisClient.js";
-import { startQueueWorker } from "./src/workers/queueWorker.js";
+import dotenv from "dotenv";
 
 dotenv.config();
 
+import queueRouter from "./src/routes/queueRoutes.js";           // POST /join, GET /status/:userId, GET /claim/:token
+import { joinLimiter, statusLimiter } from "./src/middleware/rateLimiter.js";
+
 const app = express();
-const server = createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
-initSocketIO(io); // Gør Socket.IO globalt
-
-const queueLimiter = rateLimit({
-  windowMs: 10 * 1000, // 10 sekunder
-  limit: 100,          // max 100 requests pr. IP per 10 sek.
-  message: { error: "For mange forespørgsler – prøv igen om lidt." },
-});
-
-// ---------- PATH SETUP ----------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ---------- MIDDLEWARE ----------
-app.use(express.json());
-app.use(
-  helmet({
-    contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false,
-    crossOriginOpenerPolicy: false,
-    hsts: false,
-  })
-);
-app.use(morgan("dev"));
-app.use("/queue", limiter); // Kun rate limit på API, ikke static files
+// --- Middleware
+app.disable("x-powered-by");
+app.use(express.json({ limit: "100kb" }));
 
-// ---------- STATISKE FILER ----------
+// --- Statics
 app.use("/css", express.static(path.join(__dirname, "public/css")));
-app.use("/js", express.static(path.join(__dirname, "public/js")));
-app.use("/html", express.static(path.join(__dirname, "public/html")));
+app.use("/js",  express.static(path.join(__dirname, "public/js")));
+app.use("/img", express.static(path.join(__dirname, "public/img")));
 
-// ---------- ROUTES ----------
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public/html", "index.html"));
-});
-app.get("/queue/status", checkQueueAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, "public/html", "queue.html"));
-});
-
-
-
-app.use("/queue/join", queueLimiter);
-
-app.use("/queue", queueRoutes);
-app.use(errorHandler);
-
-// ---------- SOCKET.IO ----------
-io.on("connection", (socket) => {
-  console.log("🟢 Socket.IO forbindelse:", socket.id);
-  socket.emit("connected", { message: "Forbundet til køsystemet" });
-
-  socket.on("disconnect", () => {
-    console.log("🔴 Socket.IO frakoblet:", socket.id);
-  });
-});
-
-// ---------- PORT + STARTUP ----------
-const portFlagIndex = process.argv.findIndex(arg => arg === "--port");
-const PORT = portFlagIndex !== -1 ? process.argv[portFlagIndex + 1] : 3000;
-
-
-(async () => {
+// --- Healthcheck
+app.get("/healthz", async (req, res) => {
   try {
-    await redis.ping();
-    console.log("🧠 Redis ping: PONG");
-
-    startQueueWorker(); // kun én gang pr. instans
-
-    server.listen(PORT, "0.0.0.0", () => {
-      console.log(`🚀 Server kører på port ${PORT}, PID: ${process.pid}`);
-    });
-  } catch (err) {
-    console.error("❌ Startup-fejl:", err);
-    process.exit(1);
+    // Hvis du har redis client: await redis.ping();
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e?.message || "healthz error" });
   }
-})();
+});
+
+// --- Views (enkle HTML-filer)
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/html/index.html"));
+});
+
+// Køstatus-side (polling UI). Vi tillader query param userId i URL’en, men selve siden læses bare herfra.
+app.get("/queue/status", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/html/queue.html"));
+});
+
+// --- API routes
+// Påfør rate limits pr. endpoint (kan også gøres inde i routeren)
+import { Router } from "express";
+const api = Router();
+
+api.post("/join", joinLimiter, (req, res, next) => next());    // placeholder for limiter kæde
+api.get("/status/:userId", statusLimiter, (req, res, next) => next());
+
+// Mount den rigtige router bagefter (den håndterer faktisk controllerne)
+app.use("/queue", api, queueRouter);
+
+// --- 404 fallback
+app.use((req, res) => {
+  res.status(404).json({ error: "Not found" });
+});
+
+import http from "http";
+
+// De porte du vil lytte på
+const PORTS = [3000, 3001, 3002, 3003, 3004, 3005];
+
+// Start en HTTP-server pr. port med samme Express-app
+PORTS.forEach((port) => {
+  const server = http.createServer(app);
+  server.listen(port, () => {
+    console.log(`🚀 Server lytter på http://localhost:${port}`);
+  });
+
+  // (valgfrit) pæn nedlukning
+  const shutdown = () => server.close(() => console.log(`🛑 Lukket port ${port}`));
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
+});
 

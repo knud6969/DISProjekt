@@ -10,7 +10,7 @@
   <body>
     <div class="container">
       <h1>🕓 Køstatus</h1>
-      <p id="queueInfo">Forbinder til server...</p>
+      <p id="queueInfo">Henter køstatus…</p>
 
       <div id="extraInfo" class="hidden">
         <p id="positionInfo"></p>
@@ -21,14 +21,10 @@
     </div>
 
     <footer>
-      <p style="font-size: 0.8em; color: gray">
-        Understory Køsystem &copy; 2025
-      </p>
+      <p style="font-size: 0.8em; color: gray">Understory Køsystem &copy; 2025</p>
     </footer>
 
-    <!-- Socket.IO klient -->
-    <script src="/socket.io/socket.io.js"></script>
+    <!-- Ingen Socket.IO her -->
     <script defer src="/js/queue.js"></script>
   </body>
 </html>
-

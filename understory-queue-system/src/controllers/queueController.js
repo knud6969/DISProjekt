@@ -9,7 +9,7 @@ export async function joinQueue(req, res) {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId mangler" });
 
-    const redirectUrl = "https://lamineyamalerenwanker.app";
+    const redirectUrl = "https://www.youtube.com/watch?v=xvFZjo5PgG0";
 
     const position = await addToQueue(userId, redirectUrl);
     const queueLength = await getQueueLength();

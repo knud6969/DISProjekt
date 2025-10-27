@@ -47,7 +47,6 @@ async function poll() {
     return;
   }
 
-  // Skån backend når fanen er skjult
   if (document.hidden) { scheduleNext(Math.min(MAX_MS, backoffMs * 1.5)); return; }
 
   try {
@@ -62,8 +61,13 @@ async function poll() {
     const data = await res.json();
     console.log("📊 Status:", data);
 
-    if (data.ready) { redirectReady(data); return; }
+    // 👇 FIX: REDIRECT STRAKS VED READY
+    if (data.ready === true) {
+      redirectReady(data);
+      return;
+    }
 
+    // ellers pending
     renderPending({
       position: data.position ?? null,
       ahead: data.ahead ?? (typeof data.position === "number" ? data.position - 1 : null),
@@ -72,6 +76,7 @@ async function poll() {
 
     backoffMs = 30_000;
     scheduleNext(backoffMs);
+
   } catch (e) {
     console.error("❌ Fejl ved status:", e);
     queueInfo.textContent = "⚠️ Kunne ikke hente status – prøver igen…";

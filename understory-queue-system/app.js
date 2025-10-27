@@ -4,14 +4,20 @@ import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
+import { createServer } from "http";
+import { Server } from "socket.io";
 import "express-async-errors";
 
 import queueRoutes from "./src/routes/queueRoutes.js";
 import { limiter } from "./src/middleware/rateLimiter.js";
 import { errorHandler } from "./src/middleware/errorhandler.js";
+import { initSocketIO } from "./src/config/socketInstance.js";
 
 dotenv.config();
 const app = express();
+const server = createServer(app);
+const io = new Server(server, { cors: { origin: "*" } });
+initSocketIO(io); // Gør Socket.IO tilgængelig globalt
 
 // Paths
 const __filename = fileURLToPath(import.meta.url);
@@ -24,13 +30,13 @@ app.use(
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
     crossOriginOpenerPolicy: false,
-    hsts: false, // <- Deaktiver Strict-Transport-Security
+    hsts: false,
   })
 );
 app.use(morgan("dev"));
 app.use(limiter);
 
-// 📁 Gør dine frontend-filer tilgængelige (med undermapper)
+// 📁 Statisk frontend
 app.use("/css", express.static(path.join(__dirname, "public/css")));
 app.use("/js", express.static(path.join(__dirname, "public/js")));
 app.use("/html", express.static(path.join(__dirname, "public/html")));
@@ -45,15 +51,20 @@ app.get("/queue/status", (req, res) => {
   res.sendFile(path.join(__dirname, "public/html", "queue.html"));
 });
 
-// API-routes (backend)
+// API routes
 app.use("/queue", queueRoutes);
 
-// Global error-handler
+// Fejlhåndtering
 app.use(errorHandler);
+
+// Socket.IO
+io.on("connection", (socket) => {
+  console.log("🟢 Ny Socket.IO-forbindelse:", socket.id);
+  socket.emit("connected", { message: "Forbundet til køsystemet" });
+});
 
 // Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("✅ Forbundet til Redis");
+server.listen(PORT, () => {
   console.log(`🚀 Server kører på port ${PORT}`);
 });

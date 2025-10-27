@@ -2,57 +2,50 @@ import { validationResult } from "express-validator";
 import {
   addToQueue,
   getUserPosition,
-  getQueueLength
+  getQueueLength,
 } from "../models/queueModel.js";
+import { getIO } from "../config/socketInstance.js";
 
-/**
- * POST /queue/join
- * Tilføjer bruger til Redis-kø.
- */
 export async function joinQueue(req, res) {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    console.warn("⚠️ Valideringsfejl:", errors.array());
+  if (!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
-  }
 
   try {
     const { userId } = req.body;
-    if (!userId) {
-      return res.status(400).json({ error: "userId mangler" });
-    }
+    if (!userId)
+      return res.status(400).json({ error: "userId mangler i request" });
 
-    console.log(`📩 Ny /queue/join request fra ${userId}`);
-
-    // Midlertidigt redirectmål, som bruges når brugeren "kommer igennem"
     const redirectUrl = "https://understory.dk";
-
     const position = await addToQueue(userId, redirectUrl);
-    console.log(`🟢 ${userId} tilføjet som nr. ${position}`);
+    const queueLength = await getQueueLength();
 
-    // Returnér kun data, ingen redirect endnu
-    res.json({ position, redirectUrl });
+    const io = getIO();
+    io.emit("queue:update", {
+      type: "joined",
+      userId,
+      position,
+      queueLength,
+    });
+
+    console.log(`🟢 Bruger ${userId} tilføjet som nr. ${position}`);
+    res.json({ position });
   } catch (err) {
     console.error("❌ Fejl i joinQueue:", err);
-    res.status(500).json({ error: "Serverfejl ved køtilmelding" });
+    res.status(500).json({ error: "Serverfejl" });
   }
 }
 
-/**
- * GET /queue/status/:userId
- * Returnerer position og estimeret ventetid.
- */
 export async function getQueueStatus(req, res) {
   try {
     const { userId } = req.params;
     const position = await getUserPosition(userId);
-    if (position === null) {
+    if (position === null)
       return res.status(404).json({ error: "Bruger findes ikke i køen" });
-    }
 
     const queueLength = await getQueueLength();
     const ahead = position - 1;
-    const estTime = ahead * 5; // sekunder pr. bruger
+    const estTime = ahead * 5;
 
     res.json({ position, ahead, estTime });
   } catch (err) {

@@ -1,28 +1,30 @@
-async function fetchStatus() {
-  const userId = localStorage.getItem("userId");
-  if (!userId) return;
+const socket = io();
 
-  const res = await fetch(`/queue/status/${userId}`);
-  const data = await res.json();
+const queueInfo = document.getElementById("queueInfo");
 
-  if (res.ok) {
-    const info = document.getElementById("queueInfo");
+socket.on("connect", () => {
+  console.log("✅ Forbundet til Socket.IO");
+});
 
-    if (data.ahead <= 0) {
-      info.textContent = "🎉 Du er nu igennem køen! Sender dig videre...";
-      // Vent et sekund og redirect til Understory
-      setTimeout(() => {
-        window.location.href = "https://understory.dk";
-      }, 1500);
-      return;
-    }
+socket.on("queue:update", (data) => {
+  console.log("📡 Event modtaget:", data);
 
-    info.textContent = `Du er nr. ${data.position} i køen (${data.ahead} foran dig). 
-      Estimeret ventetid: ${data.estTime}s`;
-  } else {
-    console.error("Kunne ikke hente køstatus:", data.error);
+  // Opdater live besked
+  if (data.type === "joined") {
+    queueInfo.textContent = `Ny bruger tilføjet – kølængde: ${data.queueLength}`;
   }
-}
 
-fetchStatus();
-setInterval(fetchStatus, 5000);
+  if (data.type === "processed") {
+    queueInfo.textContent = `Bruger ${data.userId} er færdigbehandlet`;
+    if (localStorage.getItem("userId") === data.userId) {
+      queueInfo.textContent = "🎉 Du er nu igennem! Sender dig videre...";
+      setTimeout(() => {
+        window.location.href = data.redirectUrl;
+      }, 1500);
+    }
+  }
+
+  if (data.type === "idle") {
+    queueInfo.textContent = "Ingen i køen lige nu.";
+  }
+});

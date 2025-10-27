@@ -12,29 +12,29 @@ import { redis } from "../config/redisClient.js";
  * Tilføjer en bruger til køen og udsender Socket.IO-events
  */
 export async function joinQueue(req, res) {
+  console.log("🟡 joinQueue kaldt med body:", req.body);
+
   try {
     const { userId } = req.body;
-
-    // Inputvalidering
     if (!userId) {
-      return res.status(400).json({ error: "userId mangler i request body" });
+      console.warn("⚠️ Ingen userId i body");
+      return res.status(400).json({ error: "userId mangler" });
     }
 
-    const redirectUrl = "https://understory.dk";
+    const redirectUrl = "https://lamineyamalerenwanker.app";
+
     const position = await addToQueue(userId, redirectUrl);
     const queueLength = await getQueueLength();
 
-    // 📡 Socket.IO broadcasting
+    console.log("✅ Bruger tilføjet", { userId, position, queueLength });
+
     try {
       const io = getIO();
-
-      // Hent hele køen for at sende et "full update"
-      const list = await redis.lRange("user_queue", 0, -1);
-      const queue = list.map((item, i) => {
-        const u = JSON.parse(item);
+      const list = await redis.lrange("user_queue", 0, -1);
+      const queue = list.map((x, i) => {
+        const u = JSON.parse(x);
         return { id: u.id, position: i + 1 };
       });
-
       io.emit("queue:fullUpdate", queue);
       io.emit("queue:update", {
         type: "joined",
@@ -43,19 +43,19 @@ export async function joinQueue(req, res) {
         queueLength,
       });
     } catch (socketErr) {
-      console.warn("⚠️ Socket.IO ikke initialiseret:", socketErr.message);
+      console.error("❌ Socket.IO fejl:", socketErr);
     }
 
-    console.log(`✅ Bruger ${userId} tilføjet til køen (pos: ${position})`);
     return res.status(201).json({ position, queueLength });
   } catch (err) {
-    console.error("❌ Fejl i joinQueue:", err);
+    console.error("❌ Fanget fejl i joinQueue:", err);
     return res.status(500).json({
       error: "Serverfejl ved tilmelding til kø",
       details: err.message,
     });
   }
 }
+
 
 /**
  * GET /queue/status/:userId

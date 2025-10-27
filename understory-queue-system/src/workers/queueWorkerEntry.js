@@ -1,3 +1,3 @@
 // src/workers/queueWorkerEntry.js
-import { startQueueWorker } from "./queueWorker.js";
+const { startQueueWorker } = require("./queueWorker.js");
 startQueueWorker();

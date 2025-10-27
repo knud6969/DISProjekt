@@ -3,7 +3,7 @@ import rateLimit from "express-rate-limit";
 
 export const joinLimiter = rateLimit({
   windowMs: 60_000,
-  max: 300, // høj rullebane for bursts
+  max: 5000, // høj rullebane for bursts
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req, res) => res.status(429).json({ error: "For mange join-forespørgsler – prøv igen." }),

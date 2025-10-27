@@ -1,6 +1,15 @@
 import { validationResult } from "express-validator";
-import { addToQueue, getUserPosition, getQueueLength } from "../models/queueModel.js";
+import {
+  addToQueue,
+  getUserPosition,
+  getQueueLength
+} from "../models/queueModel.js";
 
+/**
+ * POST /queue/join
+ * Tilføjer en bruger til køen.
+ * Returnerer position + redirectUrl (hvor brugeren skal ende efter køen)
+ */
 export async function joinQueue(req, res) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -18,17 +27,25 @@ export async function joinQueue(req, res) {
 
     console.log(`📩 Modtog /queue/join request med userId: ${userId}`);
 
-    const position = await addToQueue(userId);
+    // Midlertidig redirect til Understorys hjemmeside
+    const redirectUrl = "https://understory.dk";
+
+    // Tilføj til Redis-kø med redirectUrl
+    const position = await addToQueue(userId, redirectUrl);
 
     console.log(`🟢 Bruger ${userId} tilføjet som nr. ${position} i køen`);
 
-    res.json({ position });
+    res.json({ position, redirectUrl });
   } catch (err) {
     console.error("❌ Fejl i joinQueue:", err);
     res.status(500).json({ error: "Serverfejl ved køtilmelding" });
   }
 }
 
+/**
+ * GET /queue/status/:userId
+ * Returnerer aktuel position i køen og estimeret ventetid.
+ */
 export async function getQueueStatus(req, res) {
   try {
     const { userId } = req.params;
@@ -42,7 +59,7 @@ export async function getQueueStatus(req, res) {
 
     const queueLength = await getQueueLength();
     const ahead = position - 1;
-    const estTime = ahead * 5;
+    const estTime = ahead * 5; // Simuleret ventetid (5 sek pr. bruger)
 
     console.log(
       `📊 Køstatus: Bruger ${userId} er nr. ${position} (${ahead} foran, est. ${estTime}s)`

@@ -20,18 +20,11 @@ function renderPending({ position, ahead, etaSeconds }) {
   queueInfo.textContent = `📊 Du er nr. ${pos ?? "?"} i køen (${aheadVal ?? "?"} foran dig) • ETA ≈ ${eta}s`;
 }
 
-function redirectReady({ token, redirectUrl }) {
+function redirectReady() {
   queueInfo.textContent = "🎉 Du er igennem køen! Sender dig videre…";
-  // Brug engangstoken hvis muligt
-  if (token) {
-    window.location.href = `${BASE}/queue/claim/${token}`;
-  } else if (redirectUrl) {
-    window.location.href = redirectUrl;
-  } else {
-    // sidste fallback
-    window.location.href = "https://lamineyamalerenwanker.app";
-  }
+  window.location.href = "/done"; // fast, simpel redirect
 }
+
 
 // Polling m. jitter + backoff + visibility-awareness
 let backoffMs = 30_000;

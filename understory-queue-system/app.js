@@ -37,6 +37,12 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public/html/index.html"));
 });
 
+// Done-side (blank)
+app.get("/done", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/html/done.html"));
+});
+
+
 // Køstatus-side (polling UI). Vi tillader query param userId i URL’en, men selve siden læses bare herfra.
 app.get("/queue/status", (req, res) => {
   res.sendFile(path.join(__dirname, "public/html/queue.html"));

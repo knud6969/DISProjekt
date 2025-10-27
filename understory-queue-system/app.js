@@ -71,7 +71,12 @@ app.use((req, res) => {
 import http from "http";
 
 // De porte du vil lytte på
-const PORTS = [3000, 3001, 3002, 3003, 3004, 3005];
+const port = process.argv[2] || process.env.PORT || 3000;
+
+app.listen(port, () => {
+  console.log(`🚀 Server lytter på http://localhost:${port}`);
+});
+
 
 // Start en HTTP-server pr. port med samme Express-app
 PORTS.forEach((port) => {

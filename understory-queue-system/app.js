@@ -8,6 +8,9 @@ dotenv.config();
 
 import queueRouter from "./src/routes/queueRoutes.js";           // POST /join, GET /status/:userId, GET /claim/:token
 import { joinLimiter, statusLimiter } from "./src/middleware/rateLimiter.js";
+import helmet from "helmet";
+
+
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -16,6 +19,7 @@ const __dirname = path.dirname(__filename);
 // --- Middleware
 app.disable("x-powered-by");
 app.use(express.json({ limit: "100kb" }));
+app.use(helmet());
 
 // --- Statics
 app.use("/css", express.static(path.join(__dirname, "public/css")));

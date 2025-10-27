@@ -13,7 +13,7 @@ export async function addToQueue(userId, redirectUrl) {
       redirectUrl,
     });
 
-    await redis.rPush(QUEUE_KEY, user);
+    await redis.rpush(QUEUE_KEY, user);
     const position = await redis.lLen(QUEUE_KEY);
     console.log(`👤 Bruger ${userId} tilføjet som nr. ${position}`);
     return position;

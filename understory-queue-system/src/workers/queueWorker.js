@@ -38,7 +38,7 @@ async function processQueue() {
     await new Promise((r) => setTimeout(r, 3000));
 
     // Flyt bruger til "served" liste
-    await redis.rPush(SERVED_KEY, JSON.stringify(user));
+    await redis.(SERVED_KEY, JSON.stringify(user));
 
     // Emit event til klienter
     io.emit("queue:update", {

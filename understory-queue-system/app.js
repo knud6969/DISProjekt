@@ -72,7 +72,11 @@ io.on("connection", (socket) => {
   );
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || process.argv[2] || 3000;
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server kører på port ${PORT}, PID: ${process.pid}`);
+});
+
 
 // Boot
 (async () => {

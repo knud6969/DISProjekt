@@ -1,7 +1,7 @@
 // src/workers/queueWorker.js
-const { markReadyBatch } = require("../models/queueModel.js");
+import { markReadyBatch } from "../models/queueModel.js";
 
-const BATCH_INTERVAL_MS = 20000;
+const BATCH_INTERVAL_MS = 20000; // 20 sek
 const USERS_PER_BATCH = 10;
 
 async function runBatchOnce() {
@@ -15,7 +15,7 @@ async function runBatchOnce() {
   }
 }
 
-module.exports.startQueueWorker = function startQueueWorker() {
+export function startQueueWorker() {
   console.log("🧮 Queue worker started...");
   setInterval(runBatchOnce, BATCH_INTERVAL_MS);
-};
+}

@@ -37,7 +37,9 @@ app.use(
   })
 );
 app.use(morgan("combined"));
-app.use(limiter);
+// 🔒 Begræns kun API-ruter (ikke statiske filer eller Socket.IO)
+app.use("/queue", limiter);
+
 
 // Statics
 app.use("/css", express.static(path.join(__dirname, "public/css")));

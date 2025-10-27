@@ -72,12 +72,14 @@ const PORT = process.env.PORT || process.argv[2] || 3000;
     await redis.ping();
     console.log("🧠 Redis ping: PONG");
 
-    startQueueWorker(); // Kør kun én gang pr. instans
-    server.listen(PORT, "0.0.0.0", () =>
-      console.log(`🚀 Server kører på port ${PORT}, PID: ${process.pid}`)
-    );
+    startQueueWorker(); // kun én gang pr. instans
+
+    server.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Server kører på port ${PORT}, PID: ${process.pid}`);
+    });
   } catch (err) {
     console.error("❌ Startup-fejl:", err);
     process.exit(1);
   }
 })();
+

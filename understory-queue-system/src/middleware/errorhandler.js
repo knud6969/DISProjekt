@@ -1,7 +1,8 @@
-export function errorHandler(err, _req, res, _next) {
-  console.error("💥 Unhandled error:", err);
-  const status = err.status || 500;
-  res.status(status).json({
-    error: err.message || "Uventet serverfejl",
+// src/middleware/errorhandler.js
+export default function errorHandler(err, req, res, next) {
+  console.error("❌ Global fejl:", err);
+  res.status(500).json({
+    success: false,
+    error: err?.message || "Internal server error",
   });
 }

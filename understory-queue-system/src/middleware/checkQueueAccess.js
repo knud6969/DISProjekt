@@ -1,29 +1,23 @@
-import { getUserPosition } from "../models/queueModel.js";
+// src/middleware/checkQueueAccess.js
+import { getStatus } from "../models/queueModel.js";
 
-/**
- * Middleware: sikrer at brugeren findes i køen før de kan se /queue/status
- */
 export async function checkQueueAccess(req, res, next) {
   try {
     const userId = req.query.userId || req.params.userId;
-
-    // Ingen brugerid → redirect til forsiden
     if (!userId) {
-      console.warn("⚠️ Ingen userId i request – sender til forsiden");
+      console.warn("⚠️ Ingen userId i request – redirecter til forsiden");
       return res.redirect("/");
     }
 
-    // Tjek om brugeren findes i Redis-køen
-    const position = await getUserPosition(userId);
-    if (position === null) {
+    const st = await getStatus(userId);
+    if (!st.exists) {
       console.warn(`⚠️ Bruger ${userId} ikke i køen – redirect`);
       return res.redirect("/");
     }
 
-    // Brugeren findes → giv adgang
     next();
   } catch (err) {
-    console.error("❌ Fejl i checkQueueAccess middleware:", err);
-    return res.redirect("/");
+    console.error("❌ checkQueueAccess error:", err);
+    res.redirect("/");
   }
 }

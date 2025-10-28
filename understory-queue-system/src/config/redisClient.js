@@ -3,16 +3,39 @@ import Redis from "ioredis";
 import dotenv from "dotenv";
 dotenv.config();
 
-const redisUrl = process.env.REDIS_URL || "redis://127.0.0.1:6379";
+const isProduction = process.env.NODE_ENV === "production";
 
-export const redis = new Redis(redisUrl, {
+// Brug REDIS_URL hvis sat; ellers fornuftigt fallback for begge miljøer
+const redisUrl =
+  process.env.REDIS_URL ||
+  (isProduction ? "redis://127.0.0.1:6379" : "redis://localhost:6379");
+
+// Opret klient
+const client = new Redis(redisUrl, {
   maxRetriesPerRequest: 5,
   enableOfflineQueue: true,
   connectTimeout: 5000,
-  retryStrategy: (times) => Math.min(times * 50, 2000),
+  retryStrategy: (times) => Math.min(times * 100, 2000),
 });
 
-redis.on("connect", () => console.log("✅ Forbundet til Redis"));
-redis.on("ready", () => console.log("🧠 Redis er klar"));
-redis.on("error", (err) => console.error("❌ Redis-fejl:", err.message));
-redis.on("end", () => console.warn("⚠️  Forbindelsen til Redis lukket"));
+// Logging (hjælper med at se state lokalt)
+client.on("connect", () => console.log(`✅ Redis connected: ${redisUrl}`));
+client.on("ready",   () => console.log("🧠 Redis ready"));
+client.on("error",   (err) => console.error("❌ Redis error:", err?.message || err));
+client.on("end",     () => console.warn("⚠️ Redis connection closed"));
+
+/** Hjælper: vent på 'ready' (valgfri at bruge) */
+export async function waitForReady(timeoutMs = 8000) {
+  if (client.status === "ready") return;
+  await new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("Redis not ready in time")), timeoutMs);
+    const onReady = () => { clearTimeout(t); resolve(); };
+    const onError = (e) => { clearTimeout(t); reject(e); };
+    client.once("ready", onReady);
+    client.once("error", onError);
+  });
+}
+
+// 👉 Eksporter BÅDE named og default
+export const redis = client;
+export default client;

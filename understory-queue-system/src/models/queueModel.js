@@ -98,11 +98,22 @@ export async function claimToken(token) {
     const userId = await redis.get(key);
     if (!userId) return null;
 
+    // Slet token efter brug (engang)
     await redis.del(key);
+
+    // Hent brugerdata fra Redis
     const data = await redis.hgetall(USER_HASH(userId));
+
+    // Fjern brugeren fra READY_SET, så de ikke poppes igen
     await redis.srem(READY_SET, userId);
 
-    return { userId, redirectUrl: data.redirectUrl || "" };
+    // ✅ Garanter altid redirectUrl med fallback
+    const redirectUrl =
+      data.redirectUrl ||
+      process.env.QUEUE_REDIRECT_URL ||
+      "https://lamineyamalerenwanker.app/done";
+
+    return { userId, redirectUrl };
   } catch (err) {
     console.error("❌ claimToken error:", err);
     return null;

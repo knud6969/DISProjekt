@@ -36,21 +36,22 @@ export async function getQueueStatus(req, res) {
     const { userId } = req.params;
 
     if (!userId) {
-      console.warn("⚠️  Ingen userId i request");
+      console.warn("⚠️  userId mangler i request");
       return res.status(400).json({ error: "userId mangler" });
     }
 
     const st = await getStatus(userId);
+
     if (!st || !st.exists) {
       console.warn("⚠️  Bruger ikke fundet i køen:", userId);
       return res.status(404).json({ error: "Bruger ikke fundet" });
     }
 
-    // ✅ Hvis brugeren er klar til adgang
+    // ✅ Hvis brugeren er klar
     if (st.status === "ready") {
       const token = await issueOneTimeToken(userId);
 
-      // Giv altid fallback-redirect
+      // Sørg for at redirectUrl altid eksisterer
       const redirectUrl =
         st.redirectUrl ||
         process.env.QUEUE_REDIRECT_URL ||
@@ -65,10 +66,10 @@ export async function getQueueStatus(req, res) {
       });
     }
 
-    // ✅ Hvis brugeren stadig venter i køen
+    // ✅ Hvis brugeren stadig venter
     const { position, ahead, etaSeconds } = st;
 
-    res.status(200).json({
+    return res.status(200).json({
       ready: false,
       position,
       ahead,

@@ -34,20 +34,45 @@ export async function joinQueue(req, res) {
 export async function getQueueStatus(req, res) {
   try {
     const { userId } = req.params;
-    const st = await getStatus(userId);
 
-    if (!st.exists) return res.status(404).json({ error: "Bruger ikke fundet" });
-
-    if (st.status === "ready") {
-      const token = await issueOneTimeToken(userId);
-      return res.json({ ready: true, token, redirectUrl: st.redirectUrl });
+    if (!userId) {
+      console.warn("⚠️  Ingen userId i request");
+      return res.status(400).json({ error: "userId mangler" });
     }
 
-    res.json({
+    const st = await getStatus(userId);
+    if (!st || !st.exists) {
+      console.warn("⚠️  Bruger ikke fundet i køen:", userId);
+      return res.status(404).json({ error: "Bruger ikke fundet" });
+    }
+
+    // ✅ Hvis brugeren er klar til adgang
+    if (st.status === "ready") {
+      const token = await issueOneTimeToken(userId);
+
+      // Giv altid fallback-redirect
+      const redirectUrl =
+        st.redirectUrl ||
+        process.env.QUEUE_REDIRECT_URL ||
+        "https://lamineyamalerenwanker.app/done";
+
+      console.log(`🎟️  Bruger ${userId} er klar – udsteder token og redirecter til ${redirectUrl}`);
+
+      return res.status(200).json({
+        ready: true,
+        token,
+        redirectUrl,
+      });
+    }
+
+    // ✅ Hvis brugeren stadig venter i køen
+    const { position, ahead, etaSeconds } = st;
+
+    res.status(200).json({
       ready: false,
-      position: st.position,
-      ahead: st.ahead,
-      etaSeconds: st.etaSeconds,
+      position,
+      ahead,
+      etaSeconds,
     });
   } catch (err) {
     console.error("❌ getQueueStatus error:", err);
@@ -59,10 +84,25 @@ export async function getQueueStatus(req, res) {
 export async function claim(req, res) {
   try {
     const { token } = req.params;
-    const result = await claimToken(token);
-    if (!result) return res.status(410).json({ error: "Token invalid/expired" });
+    if (!token || token.length < 10) {
+      console.warn("⚠️  Ugyldigt token modtaget:", token);
+      return res.status(400).json({ error: "Ugyldigt tokenformat" });
+    }
 
-    res.redirect(302, result.redirectUrl);
+    const result = await claimToken(token);
+    if (!result) {
+      console.warn("⚠️  Token ikke fundet eller udløbet:", token);
+      return res.status(410).json({ error: "Token invalid/expired" });
+    }
+
+    // altid fallback hvis redirectUrl mangler
+    const redirectUrl =
+      result.redirectUrl ||
+      process.env.QUEUE_REDIRECT_URL ||
+      "https://lamineyamalerenwanker.app/done";
+
+    console.log(`➡️  Token godkendt for ${result.userId}, redirecter til ${redirectUrl}`);
+    res.redirect(302, redirectUrl);
   } catch (err) {
     console.error("❌ claim error:", err);
     res.status(500).json({ error: "claim server error" });

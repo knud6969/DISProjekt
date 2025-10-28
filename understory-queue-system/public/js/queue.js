@@ -23,12 +23,35 @@ function redirectReady(data) {
   console.log("🎉 READY → redirecter nu", data);
   queueInfo.textContent = "🎉 Du er igennem køen! Sender dig videre…";
 
-  // Hvis token gives af serveren, brug det
-  if (data.token) {
-    window.location.href = `/queue/claim/${encodeURIComponent(data.token)}`;
-  } else {
-    // fallback hvis token ikke findes
+  try {
+    // Ingen data → direkte fallback
+    if (!data) {
+      console.warn("⚠️  Ingen data modtaget fra serveren");
+      window.location.href = "/done";
+      return;
+    }
+
+    // 1️⃣  Foretrukket: token-flow
+    if (data.token && typeof data.token === "string" && data.token.length > 5) {
+      console.log("➡️  Redirect via token:", data.token);
+      window.location.href = `/queue/claim/${encodeURIComponent(data.token)}`;
+      return;
+    }
+
+    // 2️⃣  Fallback: direkte redirect-url
+    if (data.redirectUrl) {
+      console.log("➡️  Redirect via redirectUrl:", data.redirectUrl);
+      window.location.href = data.redirectUrl;
+      return;
+    }
+
+    // 3️⃣  Sidste fallback
+    console.warn("⚠️  Ingen token eller redirectUrl, sender til /done");
     window.location.href = "/done";
+  } catch (err) {
+    console.error("❌ redirectReady fejl:", err);
+    queueInfo.textContent = "⚠️  Fejl under viderestilling… prøver igen om lidt.";
+    setTimeout(() => (window.location.href = "/done"), 2000);
   }
 }
 

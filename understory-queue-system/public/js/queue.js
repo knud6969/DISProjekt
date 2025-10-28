@@ -85,3 +85,16 @@ poll();
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) scheduleNext(500);
 });
+
+function renderPending(position, ahead, etaSeconds) {
+  const pos = typeof position === "number" ? position : null;
+  const aheadVal = typeof ahead === "number" ? ahead : (pos !== null ? pos - 1 : null);
+  const eta = typeof etaSeconds === "number" ? etaSeconds : (aheadVal ?? 0) * 2;
+
+  queueInfo.textContent = `📊 Du er nr. ${pos ?? "?"} i køen (${aheadVal ?? "?"} foran dig) • ETA ≈ ${Math.round(eta)} sek`;
+
+  // Progress-bar beregning (jo lavere position, jo højere procent)
+  const totalEstimate = Math.max(aheadVal + 1, 1);
+  const progress = Math.min(100, ((totalEstimate - aheadVal) / totalEstimate) * 100);
+  document.getElementById("progress-bar").style.width = `${progress}%`;
+}

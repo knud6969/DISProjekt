@@ -6,5 +6,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>html,body{height:100%;margin:0;background:#fff}</style>
   </head>
-  <body></body>
+  <body>
+    <h1 class="understory-title">Understory</h1>
+    <div id="done-container">
+      <p class="done-message">
+        ✅ Du er igennem køen! Du viderestilles nu automatisk til betalingssiden...
+      </p>
+      <div id="loading-spinner"></div>
+    </div>
+  
+    <script>
+      // Simuler redirect efter 3 sekunder (eller din ønskede side)
+      setTimeout(() => {
+        window.location.href = "https://understory.dk/betaling"; // eller din destination
+      }, 3000);
+    </script>
+  </body>
 </html>

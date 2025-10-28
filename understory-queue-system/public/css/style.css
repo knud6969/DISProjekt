@@ -42,3 +42,53 @@ body {
     color: #333;
   }
   
+  .understory-title {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 700;
+    font-size: 2.2rem;
+    text-align: center;
+    color: #2c3e50;
+    margin-top: 20px;
+    letter-spacing: 1px;
+  }
+
+  #progress-container {
+    width: 80%;
+    height: 10px;
+    background-color: #ddd;
+    border-radius: 5px;
+    margin: 20px auto;
+    overflow: hidden;
+  }
+  
+  #progress-bar {
+    height: 100%;
+    width: 0%;
+    background-color: #27ae60;
+    transition: width 0.5s ease;
+  }
+
+  #done-container {
+    text-align: center;
+    margin-top: 100px;
+  }
+  
+  .done-message {
+    font-size: 1.3rem;
+    color: #2c3e50;
+  }
+  
+  #loading-spinner {
+    margin: 30px auto;
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #27ae60;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }

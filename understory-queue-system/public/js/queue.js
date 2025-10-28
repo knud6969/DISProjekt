@@ -20,9 +20,16 @@ function renderPending(position, ahead, etaSeconds) {
 }
 
 function redirectReady(data) {
-  console.log("🎉 READY → redirecter nu til /done", data);
+  console.log("🎉 READY → redirecter nu", data);
   queueInfo.textContent = "🎉 Du er igennem køen! Sender dig videre…";
-  window.location.href = "/done";
+
+  // Hvis token gives af serveren, brug det
+  if (data.token) {
+    window.location.href = `/queue/claim/${encodeURIComponent(data.token)}`;
+  } else {
+    // fallback hvis token ikke findes
+    window.location.href = "/done";
+  }
 }
 
 let backoffMs = 30000;

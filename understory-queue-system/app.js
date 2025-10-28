@@ -6,6 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import helmet from "helmet";
+import morgan from "morgan";
 import queueRouter from "./src/routes/queueRoutes.js";
 import { joinLimiter, statusLimiter } from "./src/middleware/rateLimiter.js";
 import errorHandler from "./src/middleware/errorhandler.js";
@@ -20,6 +21,7 @@ const __dirname = path.dirname(__filename);
 app.disable("x-powered-by");
 app.use(express.json({ limit: "100kb" }));
 app.use(helmet());
+app.use(morgan("combined"));
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/healthz", async (req, res) => {

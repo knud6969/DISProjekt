@@ -26,16 +26,20 @@ app.use(express.json({ limit: "100kb" }));
 app.use(helmet());
 app.use(morgan("combined"));
 app.use(express.static(path.join(__dirname, "public")));
+
+app.set("trust proxy", 1); 
+
 app.use(cookieParser());
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "superSecretSessionKey",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: true, // HTTPS krævet (du har HTTPS via Nginx, så det er fint)
-      httpOnly: true, // beskytter mod XSS
-      sameSite: "strict", // ingen cross-domain brug
+      secure: true,      // cookie sendes kun over HTTPS
+      httpOnly: true,    // beskytter mod XSS
+      sameSite: "strict",
       maxAge: 1000 * 60 * 30, // 30 min
     },
   })

@@ -1,53 +1,48 @@
-// src/routes/adminRoutes.js
 import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
 
 const router = express.Router();
 
-// Middelware til at beskytte admin-siden
 function requireLogin(req, res, next) {
   if (req.session && req.session.isAdmin) {
     return next();
   }
-  console.warn("🚫 Ingen aktiv admin-session");
   return res.redirect("/admin/login");
 }
 
-// GET login-side
+// viser login-siden
 router.get("/login", (req, res) => {
   res.sendFile("admin-login.html", { root: "public/html" });
 });
 
-// POST login – tjek password, sæt session og redirect til /admin
+// behandler login
 router.post("/login", express.urlencoded({ extended: true }), (req, res) => {
   const { password } = req.body;
-  const correct = process.env.ADMIN_PASS;
+  const envPass = process.env.ADMIN_PASS;
 
-  console.log("🔑 indtastet:", password);
-  console.log("🔑 korrekt :", correct);
+  console.log("🔑 Bruger skrev     :", password);
+  console.log("🔐 .env ADMIN_PASS  :", envPass);
 
-  if (password !== correct) {
-    console.warn("❌ Forkert admin-kode");
-    return res.redirect("/admin/login?error=wrongpass");
+  // bare for at undgå ekstra mellemrum i input
+  if (password && password.trim() === envPass) {
+    req.session.isAdmin = true;
+    return req.session.save(() => {
+      console.log("✅ Admin logget ind, redirecter til /admin");
+      res.redirect("/admin");
+    });
   }
 
-  req.session.isAdmin = true;
-  console.log("✅ Admin logget ind. Session ID:", req.sessionID);
-
-  req.session.save((err) => {
-    console.log("💾 Session gemt:", err || "OK");
-    res.redirect("/admin"); // 👈 redirecter nu til /admin
-  });
+  console.warn("❌ Forkert adgangskode – redirecter til login");
+  return res.redirect("/admin/login?error=wrongpass");
 });
 
-// BESKYTTET admin-side (tidligere “dashboard”)
+// selve admin-siden
 router.get("/", requireLogin, (req, res) => {
-  console.log("👀 /admin kaldt – session:", req.session);
   res.sendFile("admin.html", { root: "public/html" });
 });
 
-// Logout
+// logout
 router.get("/logout", (req, res) => {
   req.session.destroy(() => {
     res.clearCookie("connect.sid");

@@ -121,3 +121,30 @@ function renderPending(position, ahead, etaSeconds) {
   const progress = Math.min(100, ((totalEstimate - aheadVal) / totalEstimate) * 100);
   document.getElementById("progress-bar").style.width = `${progress}%`;
 }
+
+// --- Forlad køen knap ---
+const leaveBtn = document.getElementById("leaveBtn");
+
+if (leaveBtn) {
+  leaveBtn.addEventListener("click", async () => {
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      console.warn("🚫 Ingen userId fundet, redirecter til forsiden");
+      window.location.href = "/";
+      return;
+    }
+
+    try {
+      console.log("🚪 Forlader køen:", userId);
+      await fetch(`${BASE}/queue/leave/${encodeURIComponent(userId)}`, {
+        method: "DELETE",
+      });
+    } catch (err) {
+      console.error("❌ Fejl ved forlad kø:", err);
+    } finally {
+      // Fjern userId og send brugeren hjem
+      localStorage.removeItem("userId");
+      window.location.href = "/";
+    }
+  });
+}

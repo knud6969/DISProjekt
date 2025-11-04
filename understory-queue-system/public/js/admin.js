@@ -25,8 +25,26 @@ window.addEventListener("DOMContentLoaded", () => {
   const msg = document.getElementById("sms-msg");
   if (sendBtn && msg) {
     sendBtn.addEventListener("click", () => {
-      msg.textContent = "📨 SMS med statusopdatering er sendt til administratoren!";
-      setTimeout(() => (msg.textContent = ""), 5000);
+        sendBtn.addEventListener("click", async () => {
+            try {
+              const res = await fetch("/admin/send-sms", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(stats),
+              });
+          
+              if (res.ok) {
+                msg.textContent = "📨 SMS sendt til administrator!";
+              } else {
+                msg.textContent = "⚠️ Fejl ved SMS-afsendelse.";
+              }
+          
+              setTimeout(() => (msg.textContent = ""), 5000);
+            } catch (err) {
+              console.error("❌ Frontend SMS fejl:", err);
+              msg.textContent = "⚠️ Netværksfejl ved SMS-afsendelse.";
+            }
+          });
     });
   }
 

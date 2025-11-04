@@ -1,14 +1,34 @@
 console.log("✅ admin.js loaded");
 
-// Simuler visning af stats
-document.addEventListener("DOMContentLoaded", () => {
+// Når siden er klar
+window.addEventListener("DOMContentLoaded", () => {
+  // Generér mock-data
   const stats = {
-    queueLength: Math.floor(Math.random() * 50),
-    avgWait: Math.floor(Math.random() * 60),
-    totalUsers: 200 + Math.floor(Math.random() * 300),
+    queueLength: Math.floor(Math.random() * 80) + 20, // 20–100
+    avgWait: Math.floor(Math.random() * 45) + 15, // 15–60 sek
+    totalUsers: 200 + Math.floor(Math.random() * 500),
   };
 
-  document.getElementById("queueLen")?.textContent = stats.queueLength;
-  document.getElementById("avgWait")?.textContent = stats.avgWait + " sek";
-  document.getElementById("totalUsers")?.textContent = stats.totalUsers;
+  // Sæt værdierne i DOM
+  const queueLen = document.getElementById("queueLen");
+  const avgWait = document.getElementById("avgWait");
+  const totalUsers = document.getElementById("totalUsers");
+
+  if (queueLen && avgWait && totalUsers) {
+    queueLen.textContent = stats.queueLength;
+    avgWait.textContent = `${stats.avgWait} sek`;
+    totalUsers.textContent = stats.totalUsers;
+  }
+
+  // SMS-knap: viser mock-statusbesked
+  const sendBtn = document.getElementById("send-sms");
+  const msg = document.getElementById("sms-msg");
+  if (sendBtn && msg) {
+    sendBtn.addEventListener("click", () => {
+      msg.textContent = "📨 SMS med statusopdatering er sendt til administratoren!";
+      setTimeout(() => (msg.textContent = ""), 5000);
+    });
+  }
+
+  console.log("📊 Mock data indlæst:", stats);
 });

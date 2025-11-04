@@ -27,19 +27,20 @@ app.use(helmet());
 app.use(morgan("combined"));
 app.use(express.static(path.join(__dirname, "public")));
 
-app.set("trust proxy", 1); 
-
 app.use(cookieParser());
+
+app.set("trust proxy", 1); // bag nginx
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "superSecretSessionKey",
+    secret: process.env.SESSION_SECRET || "understory_secret_key",
     resave: false,
     saveUninitialized: false,
+    proxy: true,
     cookie: {
-      secure: true,      // cookie sendes kun over HTTPS
-      httpOnly: true,    // beskytter mod XSS
-      sameSite: "strict",
+      secure: true,        // stadig kun HTTPS
+      httpOnly: true,
+      sameSite: "none",    // 👈 VIGTIG ændring
       maxAge: 1000 * 60 * 30, // 30 min
     },
   })

@@ -17,18 +17,20 @@ router.get("/login", (req, res) => {
   res.sendFile("admin-login.html", { root: "public/html" });
 });
 
-// POST login
 router.post("/login", express.urlencoded({ extended: true }), (req, res) => {
-  const { password } = req.body;
-  if (password === process.env.ADMIN_PASS) {
-    req.session.isAdmin = true;
-    console.log("✅ Admin logget ind");
-    return res.redirect("/admin/dashboard");
-  } else {
-    console.warn("❌ Forkert adgangskode");
-    return res.redirect("/admin/login?error=wrongpass");
-  }
-});
+    const { password } = req.body;
+    console.log("🔑 POST /admin/login — password:", password);
+  
+    if (password === process.env.ADMIN_PASS) {
+      req.session.isAdmin = true;
+      console.log("✅ Admin logget ind — session ID:", req.session.id);
+      console.log("Session object:", req.session);
+      return res.redirect("/admin/dashboard");
+    } else {
+      console.warn("❌ Forkert adgangskode");
+      return res.redirect("/admin/login?error=wrongpass");
+    }
+  });
 
 // Beskyttet dashboard
 router.get("/dashboard", requireLogin, (req, res) => {

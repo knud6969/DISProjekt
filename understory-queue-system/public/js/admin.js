@@ -34,19 +34,19 @@ window.addEventListener("DOMContentLoaded", () => {
               });
           
               if (res.ok) {
-                msg.textContent = "📨 SMS sendt til administrator!";
+                msg.textContent = "SMS sendt til administrator!";
               } else {
-                msg.textContent = "⚠️ Fejl ved SMS-afsendelse.";
+                msg.textContent = "Fejl ved SMS-afsendelse.";
               }
           
               setTimeout(() => (msg.textContent = ""), 5000);
             } catch (err) {
-              console.error("❌ Frontend SMS fejl:", err);
-              msg.textContent = "⚠️ Netværksfejl ved SMS-afsendelse.";
+              console.error("Frontend SMS fejl:", err);
+              msg.textContent = "Netværksfejl ved SMS-afsendelse.";
             }
           });
     });
   }
 
-  console.log("📊 Mock data indlæst:", stats);
+  console.log("Mock data indlæst:", stats);
 });

@@ -26,7 +26,7 @@ export async function enqueueIfAbsent(userId, redirectUrl) {
     const rank = await redis.zrank(PENDING_ZSET, userId);
     return rank === null ? 1 : rank + 1;
   } catch (err) {
-    console.error("❌ enqueueIfAbsent error:", err);
+    console.error("enqueueIfAbsent error:", err);
     throw err;
   }
 }
@@ -52,7 +52,7 @@ export async function getStatus(userId) {
 
     return { exists: true, status: "pending", position, ahead: usersAhead, etaSeconds };
   } catch (err) {
-    console.error("❌ getStatus error:", err);
+    console.error("getStatus error:", err);
     return { exists: false, error: err.message };
   }
 }
@@ -74,7 +74,7 @@ export async function markReadyBatch(count = USERS_PER_BATCH) {
 
     return userIds;
   } catch (err) {
-    console.error("❌ markReadyBatch error:", err);
+    console.error("markReadyBatch error:", err);
     return [];
   }
 }
@@ -86,7 +86,7 @@ export async function issueOneTimeToken(userId, ttlSeconds = 120) {
     await redis.set(`queue:token:${token}`, userId, "EX", ttlSeconds);
     return token;
   } catch (err) {
-    console.error("❌ issueOneTimeToken error:", err);
+    console.error("issueOneTimeToken error:", err);
     throw err;
   }
 }
@@ -115,7 +115,7 @@ export async function claimToken(token) {
 
     return { userId, redirectUrl };
   } catch (err) {
-    console.error("❌ claimToken error:", err);
+    console.error("claimToken error:", err);
     return null;
   }
 }

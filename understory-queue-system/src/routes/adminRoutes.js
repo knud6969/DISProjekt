@@ -18,7 +18,7 @@ function requireLogin(req, res, next) {
   if (req.session && req.session.isAdmin) {
     return next();
   }
-  console.warn("🚫 Forsøg på at tilgå admin uden login");
+  console.warn("Forsøg på at tilgå admin uden login");
   return res.redirect("/admin/login");
 }
 
@@ -36,12 +36,12 @@ router.post("/login", express.urlencoded({ extended: true }), (req, res) => {
   console.log("🔐 Korrekt kode:", correct);
 
   if (password.trim() !== correct) {
-    console.warn("❌ Forkert admin-adgangskode");
+    console.warn("Forkert admin-adgangskode");
     return res.redirect("/admin/login?error=wrongpass");
   }
 
   req.session.isAdmin = true;
-  console.log("✅ Admin logget ind, session ID:", req.sessionID);
+  console.log("Admin logget ind, session ID:", req.sessionID);
 
   req.session.save((err) => {
     if (err) console.error("⚠️  Fejl ved gemning af session:", err);
@@ -74,12 +74,12 @@ router.post("/send-sms", express.json(), async (req, res) => {
       totalUsers: totalUsers ?? 200 + Math.floor(Math.random() * 500),
     };
 
-    const text = `📊 Understory Status:
+    const text = `Understory Status:
 Kølængde: ${stats.queueLength}
 Gns. ventetid: ${stats.avgWait}s
 Totale brugere i dag: ${stats.totalUsers}`;
 
-    console.log("📤 Sender SMS med tekst:\n", text);
+    console.log("Sender SMS med tekst:\n", text);
 
     // Sender via Messaging Service
     const message = await client.messages.create({
@@ -88,10 +88,10 @@ Totale brugere i dag: ${stats.totalUsers}`;
       to: process.env.ADMIN_PHONE,
     });
 
-    console.log("✅ SMS sendt. SID:", message.sid);
+    console.log("SMS sendt. SID:", message.sid);
     res.json({ ok: true, sid: message.sid });
   } catch (err) {
-    console.error("❌ Twilio fejl:", err.message);
+    console.error("Twilio fejl:", err.message);
     res.status(500).json({ error: "Kunne ikke sende SMS" });
   }
 });

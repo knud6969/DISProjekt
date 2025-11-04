@@ -16,12 +16,12 @@ function renderPending(position, ahead, etaSeconds) {
   const pos = typeof position === "number" ? position : null;
   const aheadVal = typeof ahead === "number" ? ahead : (pos !== null ? pos - 1 : null);
   const eta = typeof etaSeconds === "number" ? etaSeconds : (aheadVal ?? 0) * 2;
-  queueInfo.textContent = `📊 Du er nr. ${pos ?? "?"} i køen (${aheadVal ?? "?"} foran dig) • ETA ≈ ${Math.round(eta)}s`;
+  queueInfo.textContent = `Du er nr. ${pos ?? "?"} i køen (${aheadVal ?? "?"} foran dig) • ETA ≈ ${Math.round(eta)}s`;
 }
 
 function redirectReady(data) {
-  console.log("🎉 READY → redirecter nu", data);
-  queueInfo.textContent = "🎉 Du er igennem køen! Sender dig videre…";
+  console.log("READY → redirecter nu", data);
+  queueInfo.textContent = "Du er igennem køen! Sender dig videre…";
 
   try {
     // Ingen data → direkte fallback
@@ -46,10 +46,10 @@ function redirectReady(data) {
     }
 
     // 3️⃣  Sidste fallback
-    console.warn("⚠️  Ingen token eller redirectUrl, sender til /done");
+    console.warn("Ingen token eller redirectUrl, sender til /done");
     window.location.href = "/done";
   } catch (err) {
-    console.error("❌ redirectReady fejl:", err);
+    console.error("redirectReady fejl:", err);
     queueInfo.textContent = "⚠️  Fejl under viderestilling… prøver igen om lidt.";
     setTimeout(() => (window.location.href = "/done"), 2000);
   }
@@ -67,7 +67,7 @@ function scheduleNext(ms) {
 async function poll() {
   const userId = getUserId();
   if (!userId) {
-    console.warn("🚫 userId mangler → hjem");
+    console.warn("userId mangler → hjem");
     window.location.href = "/";
     return;
   }
@@ -80,7 +80,7 @@ async function poll() {
   try {
     const res = await fetch(`${BASE}/queue/status/${encodeURIComponent(userId)}`);
     const data = await res.json().catch(() => ({}));
-    console.log("📊 Status respons:", res.status, data);
+    console.log("Status respons:", res.status, data);
 
     if (res.status === 404) { window.location.href = "/"; return; }
     if (res.status === 429) { scheduleNext(Math.min(MAX_MS, backoffMs * 2)); return; }
@@ -96,7 +96,7 @@ async function poll() {
     scheduleNext(backoffMs);
 
   } catch (err) {
-    console.error("❌ Poll fejl:", err);
+    console.error("Poll fejl:", err);
     queueInfo.textContent = "⚠️ Fejl – prøver igen…";
     backoffMs = Math.min(MAX_MS, Math.max(MIN_MS, backoffMs * 2));
     scheduleNext(backoffMs);
@@ -114,7 +114,7 @@ function renderPending(position, ahead, etaSeconds) {
   const aheadVal = typeof ahead === "number" ? ahead : (pos !== null ? pos - 1 : null);
   const eta = typeof etaSeconds === "number" ? etaSeconds : (aheadVal ?? 0) * 2;
 
-  queueInfo.textContent = `📊 Du er nr. ${pos ?? "?"} i køen (${aheadVal ?? "?"} foran dig) • ETA ≈ ${Math.round(eta)} sek`;
+  queueInfo.textContent = `Du er nr. ${pos ?? "?"} i køen (${aheadVal ?? "?"} foran dig) • ETA ≈ ${Math.round(eta)} sek`;
 
   // Progress-bar beregning (jo lavere position, jo højere procent)
   const totalEstimate = Math.max(aheadVal + 1, 1);

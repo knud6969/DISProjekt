@@ -5,19 +5,19 @@ export async function checkQueueAccess(req, res, next) {
   try {
     const userId = req.query.userId || req.params.userId;
     if (!userId) {
-      console.warn("⚠️ Ingen userId i request – redirecter til forsiden");
+      console.warn("Ingen userId i request – redirecter til forsiden");
       return res.redirect("/");
     }
 
     const st = await getStatus(userId);
     if (!st.exists) {
-      console.warn(`⚠️ Bruger ${userId} ikke i køen – redirect`);
+      console.warn(`Bruger ${userId} ikke i køen – redirect`);
       return res.redirect("/");
     }
 
     next();
   } catch (err) {
-    console.error("❌ checkQueueAccess error:", err);
+    console.error("checkQueueAccess error:", err);
     res.redirect("/");
   }
 }

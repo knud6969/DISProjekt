@@ -4,6 +4,6 @@ document.addEventListener("DOMContentLoaded", () => {
   
     if (err === "wrongpass") {
       const errorEl = document.getElementById("error-msg");
-      if (errorEl) errorEl.textContent = "❌ Forkert adgangskode";
+      if (errorEl) errorEl.textContent = "Forkert adgangskode";
     }
   });

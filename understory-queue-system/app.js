@@ -71,4 +71,4 @@ app.use(errorHandler); // central fejl-håndtering
 app.use((_, res) => res.status(404).json({ error: "Not found" }));
 
 const port = process.argv[2] || process.env.PORT || 3000;
-app.listen(port, () => console.log(`🚀 Server kører på port ${port} [${process.env.NODE_ENV}]`));
+app.listen(port, () => console.log(`Server kører på port ${port} [${process.env.NODE_ENV}]`));

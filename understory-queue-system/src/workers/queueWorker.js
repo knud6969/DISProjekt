@@ -15,16 +15,16 @@ async function runBatchOnce() {
     const readyUsers = await markReadyBatch(USERS_PER_BATCH);
     const waiting = await redis.zcard("queue:pending");
     if (readyUsers.length > 0) {
-      console.log(`✅ Flyttede ${readyUsers.length} brugere til ready. ${waiting} tilbage.`);
+      console.log(`Flyttede ${readyUsers.length} brugere til ready. ${waiting} tilbage.`);
     } else {
-      console.log(`🕓 Ingen brugere at flytte. ${waiting} tilbage i køen.`);
+      console.log(`Ingen brugere at flytte. ${waiting} tilbage i køen.`);
     }
   } catch (err) {
-    console.error("❌ Worker fejl i runBatchOnce:", err);
+    console.error("Worker fejl i runBatchOnce:", err);
   }
 }
 
 export function startQueueWorker() {
-  console.log(`👷 Worker startet – kører hvert ${BATCH_INTERVAL_MS / 1000} sek.`);
+  console.log(`Worker startet – kører hvert ${BATCH_INTERVAL_MS / 1000} sek.`);
   setInterval(runBatchOnce, BATCH_INTERVAL_MS);
 }

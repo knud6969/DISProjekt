@@ -1,5 +1,5 @@
 // public/js/script.js
-console.log("✅ script.js (click-to-join) er loadet");
+console.log("script.js (click-to-join) er loadet");
 
 const joinBtn   = document.getElementById("joinBtn");
 const statusDiv = document.getElementById("status");
@@ -29,11 +29,11 @@ joinBtn?.addEventListener("click", async () => {
 
     // Gem userId og send til køstatus-siden
     localStorage.setItem("userId", userId);
-    setStatus(`🙌 Du er nu i køen som nr. ${data.position ?? "?"} – sender dig til status…`);
+    setStatus(`Du er nu i køen som nr. ${data.position ?? "?"} – sender dig til status…`);
     window.location.href = `/queue/status?userId=${encodeURIComponent(userId)}`;
   } catch (err) {
     console.error("🌐 Fejl ved tilmelding:", err);
-    setStatus("❌ Kunne ikke tilmelde dig køen: " + (err?.message || "ukendt fejl"));
+    setStatus("Kunne ikke tilmelde dig køen: " + (err?.message || "ukendt fejl"));
     joinBtn.disabled = false;
   }
 });

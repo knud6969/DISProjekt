@@ -12,9 +12,19 @@
       <label for="password">Adgangskode:</label>
       <input type="password" name="password" id="password" required />
       <button type="submit">Log ind</button>
-      <p style="color:red;">
-        <% if (error) { %> <%= error %> <% } %>
+
+      <p id="error-msg" style="color:red; text-align:center;">
+        <!-- Fejlbesked vises her via query string -->
       </p>
     </form>
+
+    <script>
+      // 👇 Læs ?error=... fra URL og vis den som tekst
+      const params = new URLSearchParams(window.location.search);
+      const err = params.get("error");
+      if (err === "wrongpass") {
+        document.getElementById("error-msg").textContent = "❌ Forkert adgangskode";
+      }
+    </script>
   </body>
 </html>

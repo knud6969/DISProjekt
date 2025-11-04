@@ -18,13 +18,6 @@
       </p>
     </form>
 
-    <script>
-      // 👇 Læs ?error=... fra URL og vis den som tekst
-      const params = new URLSearchParams(window.location.search);
-      const err = params.get("error");
-      if (err === "wrongpass") {
-        document.getElementById("error-msg").textContent = "❌ Forkert adgangskode";
-      }
-    </script>
+    <script src="/js/admin-login.js" defer></script>
   </body>
 </html>

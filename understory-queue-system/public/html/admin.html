@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="da">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Understory Admin Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <script src="/js/admin.js" defer></script>
+  </head>
+  <body>
+    <h1 class="understory-title">Understory Dashboard</h1>
+    <a href="/admin/logout">Log ud</a>
+
+    <div class="metric">Kølængde: <span id="queueLen">–</span></div>
+    <div class="metric">Gns. ventetid: <span id="avgWait">–</span></div>
+    <div class="metric">Totale brugere i dag: <span id="totalUsers">–</span></div>
+    <button id="send-sms">📲 Send SMS med status</button>
+    <p id="sms-msg"></p>
+  </body>
+</html>

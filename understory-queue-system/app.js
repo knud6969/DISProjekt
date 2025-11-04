@@ -11,6 +11,9 @@ import queueRouter from "./src/routes/queueRoutes.js";
 import { joinLimiter, statusLimiter } from "./src/middleware/rateLimiter.js";
 import errorHandler from "./src/middleware/errorhandler.js";
 import redis from "./src/config/redisClient.js";
+import session from "express-session";
+import cookieParser from "cookie-parser";
+import adminRouter from "./src/routes/adminRoutes.js";
 
 dotenv.config();
 
@@ -23,6 +26,22 @@ app.use(express.json({ limit: "100kb" }));
 app.use(helmet());
 app.use(morgan("combined"));
 app.use(express.static(path.join(__dirname, "public")));
+app.use(cookieParser());
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "superSecretSessionKey",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: true, // HTTPS krævet (du har HTTPS via Nginx, så det er fint)
+      httpOnly: true, // beskytter mod XSS
+      sameSite: "strict", // ingen cross-domain brug
+      maxAge: 1000 * 60 * 30, // 30 min
+    },
+  })
+);
+
+app.use("/admin", adminRouter);
 
 app.get("/healthz", async (req, res) => {
   try {

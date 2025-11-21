@@ -9,25 +9,34 @@
   <h1 class="understory-title">Understory</h1>
 
   <body>
-    <div class="container">
-      <h1>Køstatus</h1>
-      <p id="queueInfo">Henter køstatus…</p>
-<div id="progress-container">
-  <div id="progress-bar"></div>
-</div>
-      <div id="extraInfo" class="hidden">
-        <p id="positionInfo"></p>
-        <p id="timeInfo"></p>
-      </div>
+    <div class="site">
+      <header class="site-header">
+        <a href="/" class="brand">Understory</a>
+      </header>
 
-      <button id="leaveBtn" class="hidden">Forlad køen</button>
+      <main class="site-main">
+        <div class="container">
+          <h1>Køstatus</h1>
+          <p id="queueInfo">Henter køstatus…</p>
+
+          <div id="progress-container">
+            <div id="progress-bar"></div>
+          </div>
+
+          <div id="extraInfo" class="hidden">
+            <p id="positionInfo"></p>
+            <p id="timeInfo"></p>
+          </div>
+
+          <button id="leaveBtn" class="hidden">Forlad køen</button>
+        </div>
+      </main>
+
+      <footer class="site-footer">
+        Understory Køsystem &copy;
+      </footer>
     </div>
 
-    <footer>
-      <p style="font-size: 0.8em; color: gray">Understory Køsystem &copy; 2025</p>
-    </footer>
-
-    <!-- Ingen Socket.IO her -->
     <script defer src="/js/queue.js"></script>
   </body>
 </html>

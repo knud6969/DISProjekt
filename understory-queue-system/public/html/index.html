@@ -8,24 +8,29 @@
   </head>
 
   <body>
-    <div class="container">
-      <h1>Understory Køsystem</h1>
-      <p>
-        Der er i øjeblikket høj belastning på Understory.<br />
-        Klik nedenfor for at tilmelde dig køen.
-      </p>
+    <div class="site">
+      <header class="site-header">
+        <a href="/" class="brand">Understory</a>
+      </header>
 
-      <button id="joinBtn">Tilmeld kø</button>
-      <p id="status"></p>
-    </div>
+      <main class="site-main">
+        <div class="container">
+          <h1>Understory Køsystem</h1>
+          <p>
+            Der er i øjeblikket høj belastning på Understory.<br />
+            Klik nedenfor for at tilmelde dig køen.
+          </p>
 
-    <!-- Admin-adgang -->
-    <div id="admin-section" style="margin-top: 50px; text-align: center;">
-      <hr style="width: 60%; margin: 20px auto;" />
-      <p style="font-size: 1.1rem; color: #555;">Administratoradgang</p>
-      <a href="/admin/login">
-        <button id="admin-btn" class="admin-button">Gå til Admin Login</button>
-      </a>
+          <button id="joinBtn">Tilmeld kø</button>
+          <p id="status"></p>
+
+          <hr style="margin: 24px 0; border: none; border-top: 1px solid #e1e7ef;" />
+          <p style="font-size: 0.9rem; color: #6b7280;">Administratoradgang</p>
+          <a href="/admin/login">
+            <button id="admin-btn" class="admin-button">Gå til Admin Login</button>
+          </a>
+        </div>
+      </main>
     </div>
 
     <script defer src="/js/script.js"></script>

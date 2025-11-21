@@ -7,13 +7,28 @@
     <script src="/js/admin.js" defer></script>
   </head>
   <body>
-    <h1 class="understory-title">Understory Dashboard</h1>
-    <a href="/admin/logout">Log ud</a>
+    <div class="site admin-page">
+      <header class="site-header">
+        <a href="/" class="brand">Understory</a>
+      </header>
 
-    <div class="metric">Kølængde: <span id="queueLen">–</span></div>
-    <div class="metric">Gns. ventetid: <span id="avgWait">–</span></div>
-    <div class="metric">Totale brugere i dag: <span id="totalUsers">–</span></div>
-    <button id="send-sms">📲 Send SMS med status</button>
-    <p id="sms-msg"></p>
+      <main class="site-main">
+        <div class="container">
+          <div class="admin-header-row">
+            <h1>Understory Dashboard</h1>
+            <a href="/admin/logout">Log ud</a>
+          </div>
+
+          <div class="metric">Kølængde: <span id="queueLen">–</span></div>
+          <div class="metric">Gns. ventetid: <span id="avgWait">–</span></div>
+          <div class="metric">Totale brugere i dag: <span id="totalUsers">–</span></div>
+
+          <button id="send-sms">📲 Send SMS med status</button>
+          <p id="sms-msg"></p>
+        </div>
+      </main>
+    </div>
+
+    <script src="/js/admin.js" defer></script>
   </body>
 </html>

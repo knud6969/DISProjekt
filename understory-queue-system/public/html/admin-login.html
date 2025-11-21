@@ -6,17 +6,27 @@
     <link rel="stylesheet" href="/css/style.css" />
   </head>
   <body>
-    <h1 class="understory-title">Understory Admin</h1>
+    <div class="site admin-page">
+      <header class="site-header">
+        <a href="/" class="brand">Understory</a>
+      </header>
 
-    <form action="/admin/login" method="POST" id="login-form">
-      <label for="password">Adgangskode:</label>
-      <input type="password" name="password" id="password" required />
-      <button type="submit">Log ind</button>
+      <main class="site-main">
+        <div class="container">
+          <h1>Admin Login</h1>
 
-      <p id="error-msg" style="color:red; text-align:center;">
-        <!-- Fejlbesked vises her via query string -->
-      </p>
-    </form>
+          <form action="/admin/login" method="POST" id="login-form">
+            <label for="password">Adgangskode:</label>
+            <input type="password" name="password" id="password" required />
+            <button type="submit">Log ind</button>
+
+            <p id="error-msg" style="color:red; text-align:center;">
+              <!-- Fejlbesked vises her via query string -->
+            </p>
+          </form>
+        </div>
+      </main>
+    </div>
 
     <script src="/js/admin-login.js" defer></script>
   </body>

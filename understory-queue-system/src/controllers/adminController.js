@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // Importer service til at sende SMS
-import { sendStatusSms } from "../services/adminService.js";
+import { sendStatusSms } from "src/services/adminServices.js";
 
 // Vis admin login-side
 export function showLogin(req, res) {

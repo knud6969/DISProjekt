@@ -5,8 +5,8 @@ import { markReadyBatch } from "../models/queueModel.js";
 import redis from "../config/redisClient.js";
 
 // Konstanter for worker-cyklussen
-const CYCLE_INTERVAL_MS = 1000; // hvert sekund
-const USERS_PER_CYCLE = 1;      // 1 bruger ad gangen
+const CYCLE_INTERVAL_MS = 5000; // hvert 5 sekund
+const USERS_PER_CYCLE = 10; // 10 bruger ad gangen
 
 // En enkelt cyklus der flytter brugere
 async function runCycle() {

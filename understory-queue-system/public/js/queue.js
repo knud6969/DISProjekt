@@ -15,14 +15,34 @@ function getUserId() {
   return getQueryUserId() || localStorage.getItem("userId");
 }
 
-// Render køstatus og viser info til brugeren
+// Render køstatus og justér polling baseret på hvor langt man er
 function renderPending(position, ahead, etaSeconds) {
   const pos = typeof position === "number" ? position : null;
   const aheadVal = typeof ahead === "number" ? ahead : (pos !== null ? pos - 1 : null);
   const eta = typeof etaSeconds === "number" ? etaSeconds : (aheadVal ?? 0) * 2;
-  queueInfo.textContent = `Du er nr. ${pos ?? "?"} i køen (${aheadVal ?? "?"} foran dig) • ETA ≈ ${Math.round(eta)}s`;
-}
 
+  queueInfo.textContent = `Du er nr. ${pos ?? "?"} i køen (${aheadVal ?? "?"} foran dig) • ETA ≈ ${Math.round(eta)}s`;
+
+  // Dynamisk justering af polling-interval baseret på køposition
+  if (aheadVal === null) {
+    backoffMs = 5000;
+    return;
+  }
+
+  if (aheadVal <= 5) {
+    // Brugeren er tæt på → hyppige polls
+    backoffMs = 3000;
+  } else if (aheadVal <= 20) {
+    // Midt i køen → medium polls
+    backoffMs = 5000;
+  } else {
+    // Langt nede → skån serveren
+    backoffMs = 10000;
+  }
+
+  // Respektér generelle min/max‐grænser
+  backoffMs = Math.min(Math.max(backoffMs, MIN_MS), MAX_MS);
+}
 
 // Viderestillingslogik når brugeren er klar
 function redirectReady(data) {
@@ -63,7 +83,10 @@ function redirectReady(data) {
 
 // Polling-logik med backoff
 let backoffMs = 5000;
-const MIN_MS = 10000, MAX_MS = 120000;
+
+// Minimum og maksimum polling-interval
+const MIN_MS = 3000;
+MAX_MS = 20000; 
 let pollTimer = null;
 
 // Planlæg næste polling-forespørgsel
@@ -101,7 +124,7 @@ async function poll() {
     }
 
     renderPending(data.position, data.ahead, data.etaSeconds);
-    backoffMs = 30000;
+    backoffMs = 5000; // nulstil backoff ved succes
     scheduleNext(backoffMs);
 
   } catch (err) {

@@ -1,7 +1,9 @@
 // src/models/queueModel.js
+// Importer Redis-klienten og nødvendige moduler
 import redis from "../config/redisClient.js";
 import crypto from "crypto";
 
+// Redis-nøgler og konstanter
 const PENDING_ZSET = "queue:pending";
 const READY_SET = "queue:ready";
 const USER_HASH = (id) => `queue:user:${id}`;

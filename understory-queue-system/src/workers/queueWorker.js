@@ -1,11 +1,14 @@
 // src/workers/queueWorker.js
+
+// Worker der periodisk flytter brugere fra PENDING til READY i køen
 import { markReadyBatch } from "../models/queueModel.js";
 import redis from "../config/redisClient.js";
 
-// --- Ny, glattere logik ---
+// Konstanter for worker-cyklussen
 const CYCLE_INTERVAL_MS = 1000; // hvert sekund
 const USERS_PER_CYCLE = 1;      // 1 bruger ad gangen
 
+// En enkelt cyklus der flytter brugere
 async function runCycle() {
   if (redis.status !== "ready") {
     console.warn("Redis ikke klar – springer iteration over");
@@ -26,6 +29,7 @@ async function runCycle() {
   }
 }
 
+// Starter worker-loopet 
 export function startQueueWorker() {
   console.log(`🚀 Worker startet – flytter ${USERS_PER_CYCLE} bruger hvert ${CYCLE_INTERVAL_MS / 1000} sekund.`);
   setInterval(runCycle, CYCLE_INTERVAL_MS);

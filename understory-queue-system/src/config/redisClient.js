@@ -1,4 +1,6 @@
 // src/config/redisClient.js
+
+// Redis-klientopsætning med ioredis
 import Redis from "ioredis";
 import dotenv from "dotenv";
 dotenv.config();
@@ -24,7 +26,7 @@ client.on("ready",   () => console.log("🧠 Redis ready"));
 client.on("error",   (err) => console.error("❌ Redis error:", err?.message || err));
 client.on("end",     () => console.warn("⚠️ Redis connection closed"));
 
-/** Hjælper: vent på 'ready' (valgfri at bruge) */
+// Vent på at Redis er klar for derfter at bruge den
 export async function waitForReady(timeoutMs = 8000) {
   if (client.status === "ready") return;
   await new Promise((resolve, reject) => {
@@ -36,6 +38,6 @@ export async function waitForReady(timeoutMs = 8000) {
   });
 }
 
-// 👉 Eksporter BÅDE named og default
+// Eksporter klienten
 export const redis = client;
 export default client;

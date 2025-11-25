@@ -1,16 +1,19 @@
 // public/js/script.js
+// Logger at scriptet er indlæst
 console.log("script.js (click-to-join) er loadet");
 
+// DOM-elementer og konstanter
 const joinBtn   = document.getElementById("joinBtn");
 const statusDiv = document.getElementById("status");
 const BASE_URL  = window.location.origin;
 
+// Opdater statusbesked
 function setStatus(t){ if (statusDiv) statusDiv.textContent = t; }
 
-// VIGTIGT: Ingen auto-redirect her. Man join’er KUN når man klikker.
+// Ingen auto-redirect her. Man join’er KUN når man klikker.
 joinBtn?.addEventListener("click", async () => {
   joinBtn.disabled = true;
-  setStatus("⏳ Tilmeldes køen...");
+  setStatus("Tilmeldes køen...");
 
   // Stabilt userId
   let userId;
@@ -32,7 +35,7 @@ joinBtn?.addEventListener("click", async () => {
     setStatus(`Du er nu i køen som nr. ${data.position ?? "?"} – sender dig til status…`);
     window.location.href = `/queue/status?userId=${encodeURIComponent(userId)}`;
   } catch (err) {
-    console.error("🌐 Fejl ved tilmelding:", err);
+    console.error("Fejl ved tilmelding:", err);
     setStatus("Kunne ikke tilmelde dig køen: " + (err?.message || "ukendt fejl"));
     joinBtn.disabled = false;
   }

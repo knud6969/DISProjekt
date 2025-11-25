@@ -1,3 +1,4 @@
+// Event listener for at vise fejlmeddelelse ved forkert adgangskode 
 document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
     const err = params.get("error");

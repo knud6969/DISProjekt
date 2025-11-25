@@ -1,4 +1,5 @@
-console.log("✅ admin.js loaded");
+// Logger at scriptet er indlæst
+console.log("admin.js loaded");
 
 // Når siden er klar
 window.addEventListener("DOMContentLoaded", () => {

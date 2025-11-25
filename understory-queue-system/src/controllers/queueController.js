@@ -1,7 +1,9 @@
 // src/controllers/queueController.js
+// Importer nødvendige modeller og Redis-klienten
 import { enqueueIfAbsent, getStatus, issueOneTimeToken, claimToken } from "../models/queueModel.js";
 import { redis } from "../config/redisClient.js";
 
+// Standard redirect-URL hvis ikke angivet i miljøvariabler
 const REDIRECT_URL = process.env.QUEUE_REDIRECT_URL || "https://lamineyamalerenwanker.app";
 
 // Test endpoint: sæt bruger som ready manuelt
@@ -16,7 +18,7 @@ export async function forceReady(req, res) {
   }
 }
 
-// POST /queue/join
+// POST /queue/join for at tilføje bruger til køen
 export async function joinQueue(req, res) {
   try {
     const { userId } = req.body || {};
@@ -30,7 +32,7 @@ export async function joinQueue(req, res) {
   }
 }
 
-// GET /queue/status/:userId
+// GET /queue/status/:userId for at hente køstatus
 export async function getQueueStatus(req, res) {
   try {
     const { userId } = req.params;
@@ -81,7 +83,7 @@ export async function getQueueStatus(req, res) {
   }
 }
 
-// GET /queue/claim/:token
+// GET /queue/claim/:token for at indløse et token og redirecte
 export async function claim(req, res) {
   try {
     const { token } = req.params;

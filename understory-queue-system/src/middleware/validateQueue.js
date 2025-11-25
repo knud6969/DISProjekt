@@ -1,6 +1,8 @@
 // src/middleware/validateQueue.js
+// Middleware til validering af kø-relaterede requests
 import { body, param, validationResult } from "express-validator";
 
+// Validering for /queue/join endpoint
 export const validateJoin = [
   body("userId")
     .isUUID()
@@ -15,6 +17,7 @@ export const validateJoin = [
   },
 ];
 
+// Validering for /queue/status/:userId endpoint
 export const validateTokenParam = [
   param("token")
     .isLength({ min: 10 })

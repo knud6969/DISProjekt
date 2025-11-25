@@ -1,11 +1,13 @@
+// Rate limiting middleware til Express med Redis-backend
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import { redis } from "../config/redisClient.js";
 
-// Store IP strikes to allow temp banning
-const BLOCK_TIME_SECONDS = 60 * 15; // 15 min ban
-const STRIKE_THRESHOLD = 5; // 5 rate limit violations before ban
+// Konfiguration for IP-baseret blokering
+const BLOCK_TIME_SECONDS = 60 * 15; // 15 minutter blokering
+const STRIKE_THRESHOLD = 5; // 5 strikes før blokering
 
+// Funktion til at registrere en strike for en IP
 async function recordStrike(ip) {
   const key = `ip:strikes:${ip}`;
   const strikes = await redis.incr(key);
@@ -15,6 +17,7 @@ async function recordStrike(ip) {
   return strikes;
 }
 
+// Funktion til at tjekke om IP er blokeret
 export async function ipBanCheck(req, res, next) {
   const ip = req.ip;
   const banned = await redis.get(`ip:ban:${ip}`);
@@ -24,6 +27,7 @@ export async function ipBanCheck(req, res, next) {
   next();
 }
 
+// Funktion til at håndtere rate limit overskridelser
 export async function ipBanAfterStrike(req, res, next) {
   const ip = req.ip;
   const strikes = await recordStrike(ip);
@@ -34,17 +38,17 @@ export async function ipBanAfterStrike(req, res, next) {
   next();
 }
 
-// High-limit for /queue/join (bursty allowed)
+// Funktion til at nulstille strikes for en IP (kan bruges ved succesfulde requests)
 export const joinLimiter = rateLimit({
   windowMs: 60_000, // 1 min
-  max: 1200,        // allow 20 req/sec per IP
+  max: 1200,        // 20 req/sec average
   standardHeaders: true,
   legacyHeaders: false,
   handler: ipBanAfterStrike,
   store: new RedisStore({ sendCommand: (...args) => redis.call(...args) }),
 });
 
-// Low-limit for /queue/status
+// Rate limiter for status endpoint
 export const statusLimiter = rateLimit({
   windowMs: 60_000,
   max: 60,          // 1 req/sec average

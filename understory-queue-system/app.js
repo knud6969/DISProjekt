@@ -1,5 +1,9 @@
-process.on("unhandledRejection", (err) => console.error("Unhandled Rejection:", err));
-process.on("uncaughtException", (err) => console.error("Uncaught Exception:", err));
+process.on("unhandledRejection", (err) =>
+  console.error("Unhandled Rejection:", err)
+);
+process.on("uncaughtException", (err) =>
+  console.error("Uncaught Exception:", err)
+);
 
 import express from "express";
 import path from "path";
@@ -21,16 +25,24 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// --- Basal security & logging
 app.disable("x-powered-by");
 app.use(express.json({ limit: "100kb" }));
 app.use(helmet());
 app.use(morgan("combined"));
+
+// Statisk frontend (html, css, js, img)
 app.use(express.static(path.join(__dirname, "public")));
+
+// Favicon – bare for at undgå støj i konsollen
+app.get("/favicon.ico", (req, res) => res.status(204).end());
 
 app.use(cookieParser());
 
-app.set("trust proxy", 1); // bag nginx
+// Vi står bag nginx på dropletten
+app.set("trust proxy", 1);
 
+// --- Session (til admin-login)
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "understory_secret_key",
@@ -38,37 +50,55 @@ app.use(
     saveUninitialized: false,
     proxy: true,
     cookie: {
-      secure: true,        // stadig kun HTTPS
+      secure: true,          // kun via HTTPS (ok på droplet)
       httpOnly: true,
-      sameSite: "none",    // 👈 VIGTIG ændring
-      maxAge: 1000 * 60 * 30, // 30 min
+      sameSite: "none",      // så cookies sendes også fra admin.domain
+      maxAge: 1000 * 60 * 30 // 30 minutter
     },
   })
 );
 
+// --- Admin routes (login, dashboard, sms)
 app.use("/admin", adminRouter);
 
+// --- Healthcheck (inkl. Redis)
 app.get("/healthz", async (req, res) => {
   try {
     const pong = await redis.ping();
     res.json({ ok: pong === "PONG" });
   } catch (e) {
-    res.status(500).json({ ok: false, error: e?.message || "Redis unreachable" });
+    res
+      .status(500)
+      .json({ ok: false, error: e?.message || "Redis unreachable" });
   }
 });
 
-app.get("/", (_, res) => res.sendFile(path.join(__dirname, "public/html/index.html")));
-app.get("/done", (_, res) => res.sendFile(path.join(__dirname, "public/html/done.html")));
-app.get("/queue/status", (_, res) => res.sendFile(path.join(__dirname, "public/html/queue.html")));
+// --- HTML pages
+app.get("/", (_, res) =>
+  res.sendFile(path.join(__dirname, "public/html/index.html"))
+);
+app.get("/done", (_, res) =>
+  res.sendFile(path.join(__dirname, "public/html/done.html"))
+);
+app.get("/queue/status", (_, res) =>
+  res.sendFile(path.join(__dirname, "public/html/queue.html"))
+);
 
+// --- Queue API (join/status + rate limiting)
 import { Router } from "express";
 const api = Router();
+
 api.post("/join", joinLimiter, (req, res, next) => next());
 api.get("/status/:userId", statusLimiter, (req, res, next) => next());
 
 app.use("/queue", api, queueRouter);
-app.use(errorHandler); // central fejl-håndtering
+
+// --- Central fejl-håndtering + 404
+app.use(errorHandler);
 app.use((_, res) => res.status(404).json({ error: "Not found" }));
 
+// --- Start server
 const port = process.argv[2] || process.env.PORT || 3000;
-app.listen(port, () => console.log(`Server kører på port ${port} [${process.env.NODE_ENV}]`));
+app.listen(port, () => {
+  console.log(`Server kører på port ${port} [${process.env.NODE_ENV}]`);
+});

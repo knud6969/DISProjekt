@@ -2,6 +2,7 @@
 // Importer nødvendige modeller og Redis-klienten
 import { enqueueIfAbsent, getStatus, issueOneTimeToken, claimToken } from "../models/queueModel.js";
 import { redis } from "../config/redisClient.js";
+import { randomUUID } from "crypto";
 
 // Standard redirect-URL hvis ikke angivet i miljøvariabler
 const REDIRECT_URL = process.env.QUEUE_REDIRECT_URL || "https://lamineyamalerenwanker.app";
@@ -21,11 +22,19 @@ export async function forceReady(req, res) {
 // POST /queue/join for at tilføje bruger til køen
 export async function joinQueue(req, res) {
   try {
-    const { userId } = req.body || {};
-    if (!userId) return res.status(400).json({ error: "userId mangler" });
+    let { userId } = req.body || {};
+
+    // Hvis client ikke sender userId (fx loadtest), genererer vi et selv
+    if (!userId || typeof userId !== "string" || !userId.trim()) {
+      userId = randomUUID();
+    } else {
+      userId = userId.trim();
+    }
 
     const position = await enqueueIfAbsent(userId, REDIRECT_URL);
-    res.status(201).json({ ok: true, position });
+
+    // Vi returnerer også userId, så man kan inspicere det i testen hvis man vil
+    res.status(201).json({ ok: true, userId, position });
   } catch (err) {
     console.error("joinQueue error:", err);
     res.status(500).json({ error: "joinQueue server error" });

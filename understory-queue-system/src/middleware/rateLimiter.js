@@ -1,57 +1,71 @@
-// Rate limiting middleware til Express med Redis-backend
+// src/middleware/rateLimiter.js
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import { redis } from "../config/redisClient.js";
 
-// Konfiguration for IP-baseret blokering
-const BLOCK_TIME_SECONDS = 60 * 15; // 15 minutter blokering
-const STRIKE_THRESHOLD = 5; // 5 strikes før blokering
+// Din droplet + localhost whitelisting → stopper limiter under loadtest
+const WHITELIST = new Set([
+  "138.68.76.114", // Droplet selv
+  "::1",
+  "127.0.0.1"
+]);
 
-// Funktion til at registrere en strike for en IP
+function skipIfWhitelisted(req) {
+  return WHITELIST.has(req.ip);
+}
+
+const BLOCK_TIME_SECONDS = 60 * 15; 
+const STRIKE_THRESHOLD = 5;
+
+// --- Strike registration
 async function recordStrike(ip) {
   const key = `ip:strikes:${ip}`;
   const strikes = await redis.incr(key);
-  if (strikes === 1) {
-    await redis.expire(key, BLOCK_TIME_SECONDS); // auto clear
-  }
+  if (strikes === 1) await redis.expire(key, BLOCK_TIME_SECONDS);
   return strikes;
 }
 
-// Funktion til at tjekke om IP er blokeret
+// --- IP ban check
 export async function ipBanCheck(req, res, next) {
-  const ip = req.ip;
-  const banned = await redis.get(`ip:ban:${ip}`);
+  if (WHITELIST.has(req.ip)) return next();
+  const banned = await redis.get(`ip:ban:${req.ip}`);
   if (banned) {
     return res.status(429).json({ error: "IP temporarily banned" });
   }
   next();
 }
 
-// Funktion til at håndtere rate limit overskridelser
-export async function ipBanAfterStrike(req, res, next) {
-  const ip = req.ip;
-  const strikes = await recordStrike(ip);
+// --- On-rate-limit handler
+async function ipBanAfterStrike(req, res, next) {
+  if (WHITELIST.has(req.ip)) return next();
+  const strikes = await recordStrike(req.ip);
   if (strikes >= STRIKE_THRESHOLD) {
-    await redis.set(`ip:ban:${ip}`, 1, "EX", BLOCK_TIME_SECONDS);
-    return res.status(429).json({ error: "Too many requests – IP banned temporarily" });
+    await redis.set(`ip:ban:${req.ip}`, 1, "EX", BLOCK_TIME_SECONDS);
+    return res.status(429).json({ error: "Too many requests – IP banned" });
   }
   next();
 }
 
-// Funktion til at nulstille strikes for en IP (kan bruges ved succesfulde requests)
+// --- Loadtest-friendly limits
+const JOIN_MAX = Number(process.env.JOIN_LIMIT_PER_MIN || 20000); 
+const STATUS_MAX = Number(process.env.STATUS_LIMIT_PER_MIN || 60000);
+
+// --- Join limiter
 export const joinLimiter = rateLimit({
-  windowMs: 60_000, // 1 min
-  max: 1200,        // 20 req/sec average
+  windowMs: 60_000,
+  max: JOIN_MAX,
+  skip: skipIfWhitelisted,    // gør loadtest mulig
   standardHeaders: true,
   legacyHeaders: false,
   handler: ipBanAfterStrike,
   store: new RedisStore({ sendCommand: (...args) => redis.call(...args) }),
 });
 
-// Rate limiter for status endpoint
+// --- Status limiter
 export const statusLimiter = rateLimit({
   windowMs: 60_000,
-  max: 60,          // 1 req/sec average
+  max: STATUS_MAX,
+  skip: skipIfWhitelisted,    // gør loadtest mulig
   standardHeaders: true,
   legacyHeaders: false,
   handler: ipBanAfterStrike,

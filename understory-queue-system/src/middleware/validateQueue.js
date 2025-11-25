@@ -4,9 +4,7 @@ import { body, param, validationResult } from "express-validator";
 
 // Validering for /queue/join endpoint
 export const validateJoin = [
-  body("userId")
-    .isUUID()
-    .withMessage("userId skal være et gyldigt UUID"),
+  body("userId").optional().isUUID().withMessage("userId skal være et gyldigt UUID"),
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

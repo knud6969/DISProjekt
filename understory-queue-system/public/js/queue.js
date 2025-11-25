@@ -62,7 +62,7 @@ function redirectReady(data) {
 }
 
 // Polling-logik med backoff
-let backoffMs = 30000;
+let backoffMs = 5000;
 const MIN_MS = 10000, MAX_MS = 120000;
 let pollTimer = null;
 

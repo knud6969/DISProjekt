@@ -3,10 +3,11 @@
 // Worker der periodisk flytter brugere fra PENDING til READY i køen
 import { markReadyBatch } from "../models/queueModel.js";
 import redis from "../config/redisClient.js";
+import { logCompletedUser } from "../services/metricsService.js";
 
 // Konstanter for worker-cyklussen
-const CYCLE_INTERVAL_MS = 2000; // hvert 5 sekund
-const USERS_PER_CYCLE = 50; // 10 bruger ad gangen
+const CYCLE_INTERVAL_MS = 2000; // hvert 2. sekund
+const USERS_PER_CYCLE = 50;     // 50 brugere ad gangen
 
 // En enkelt cyklus der flytter brugere
 async function runCycle() {
@@ -20,7 +21,16 @@ async function runCycle() {
     const waiting = await redis.zcard("queue:pending");
 
     if (readyUsers.length > 0) {
-      console.log(`Flyttede ${readyUsers.length} bruger(e) til READY. ${waiting} tilbage i køen.`);
+      console.log(
+        `Flyttede ${readyUsers.length} bruger(e) til READY. ${waiting} tilbage i køen.`
+      );
+
+      // Log hver færdigbehandlet bruger til SQLite (non-blocking)
+      for (const userId of readyUsers) {
+        logCompletedUser(userId).catch((err) => {
+          console.error("Fejl ved logning af bruger til SQLite:", err);
+        });
+      }
     } else {
       console.log(`Ingen nye brugere at flytte. ${waiting} stadig i køen.`);
     }
@@ -29,8 +39,12 @@ async function runCycle() {
   }
 }
 
-// Starter worker-loopet 
+// Starter worker-loopet
 export function startQueueWorker() {
-  console.log(`🚀 Worker startet – flytter ${USERS_PER_CYCLE} bruger hvert ${CYCLE_INTERVAL_MS / 1000} sekund.`);
+  console.log(
+    `🚀 Worker startet – flytter ${USERS_PER_CYCLE} bruger(e) hvert ${
+      CYCLE_INTERVAL_MS / 1000
+    } sekund.`
+  );
   setInterval(runCycle, CYCLE_INTERVAL_MS);
 }

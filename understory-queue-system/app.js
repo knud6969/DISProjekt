@@ -6,6 +6,7 @@ process.on("uncaughtException", (err) =>
 );
 
 import express from "express";
+import { initSqlite } from "./src/config/sqliteClient.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
@@ -96,6 +97,11 @@ app.use("/queue", api, queueRouter);
 // --- Central fejl-håndtering + 404
 app.use(errorHandler);
 app.use((_, res) => res.status(404).json({ error: "Not found" }));
+
+// --- Init SQLite DB
+await initSqlite().catch((err) => {
+  console.error("⚠️ Kunne ikke initialisere SQLite:", err.message);
+});
 
 // --- Start server
 const port = process.argv[2] || process.env.PORT || 3000;

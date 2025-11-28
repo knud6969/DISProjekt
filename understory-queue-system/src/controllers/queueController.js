@@ -3,6 +3,8 @@
 import { enqueueIfAbsent, getStatus, issueOneTimeToken, claimToken } from "../models/queueModel.js";
 import { redis } from "../config/redisClient.js";
 import { randomUUID } from "crypto";
+import { logJoin } from "../services/metricsService.js"; 
+
 
 // Standard redirect-URL hvis ikke angivet i miljøvariabler
 const REDIRECT_URL = process.env.QUEUE_REDIRECT_URL || "https://lamineyamalerenwanker.app";
@@ -33,7 +35,11 @@ export async function joinQueue(req, res) {
 
     const position = await enqueueIfAbsent(userId, REDIRECT_URL);
 
-    // Vi returnerer også userId, så man kan inspicere det i testen hvis man vil
+    // Log join asynkront – men lad aldrig metrics vælte API'et
+    logJoin().catch((err) =>
+      console.error("metrics logJoin fejl (ignoreret):", err.message)
+    );
+
     res.status(201).json({ ok: true, userId, position });
   } catch (err) {
     console.error("joinQueue error:", err);

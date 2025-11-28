@@ -3,6 +3,7 @@
 // Importer nødvendige moduler
 import dotenv from "dotenv";
 import twilio from "twilio";
+import { getTodayMetrics } from "./metricsService.js";
 
 // Indlæs miljøvariabler
 dotenv.config();
@@ -14,17 +15,14 @@ const client = twilio(
 );
 
 // Funktion til at sende status-SMS til admin
-export async function sendStatusSms({ queueLength, avgWait, totalUsers }) {
-  const stats = {
-    queueLength: queueLength ?? Math.floor(Math.random() * 80) + 20,
-    avgWait: avgWait ?? Math.floor(Math.random() * 45) + 15,
-    totalUsers: totalUsers ?? 200 + Math.floor(Math.random() * 500),
-  };
+export async function sendStatusSms() {
+  // Hent dagens metrics fra SQLite
+  const { joins, completed, queueLength } = await getTodayMetrics();
 
-  const text = `Understory Status:
-Kølængde: ${stats.queueLength}
-Gns. ventetid: ${stats.avgWait}s
-Totale brugere i dag: ${stats.totalUsers}`;
+  const text = `Understory status (i dag):
+- Kølængde lige nu: ${queueLength}
+- Brugere i kø i dag: ${joins}
+- Færdigbehandlede brugere: ${completed}`;
 
   const msg = await client.messages.create({
     body: text,

@@ -51,3 +51,37 @@ export function logCompletedUser(userId) {
     );
   });
 }
+
+// Hent aggregerede metrics for i dag
+export function getTodayMetrics() {
+    return new Promise((resolve, reject) => {
+      db.all(
+        `
+        SELECT event, COUNT(*) as count
+        FROM queue_metrics
+        WHERE DATE(timestamp, 'localtime') = DATE('now', 'localtime')
+        GROUP BY event
+        `,
+        [],
+        (err, rows) => {
+          if (err) return reject(err);
+  
+          let joins = 0;
+          let completed = 0;
+  
+          for (const row of rows) {
+            if (row.event === "join") joins = row.count;
+            else if (row.event === "completed") completed = row.count;
+          }
+  
+          const queueLength = Math.max(joins - completed, 0);
+  
+          resolve({
+            joins,
+            completed,
+            queueLength,
+          });
+        }
+      );
+    });
+  }

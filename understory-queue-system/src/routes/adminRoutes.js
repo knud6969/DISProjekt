@@ -7,6 +7,7 @@ import {
   renderDashboard,
   handleLogout,
   sendSmsStatus,
+  getDashboardData,
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -17,6 +18,9 @@ router.post("/login", express.urlencoded({ extended: true }), handleLogin);
 
 // Protected dashboard
 router.get("/", requireLogin, renderDashboard);
+
+// Dashboard data endpoint
+router.get("/dashboard-data", requireLogin, getDashboardData);
 
 // Logout
 router.get("/logout", handleLogout);

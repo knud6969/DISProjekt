@@ -9,6 +9,7 @@ import {
 } from "../models/queueModel.js";
 import { redis } from "../config/redisClient.js";
 import { randomUUID } from "crypto";
+import { logJoin } from "../services/metricsService.js"; 
 
 // Standard redirect-URL hvis ikke angivet i miljøvariabler
 const REDIRECT_URL =
@@ -42,6 +43,10 @@ export async function joinQueue(req, res) {
     }
 
     const position = await enqueueIfAbsent(userId, REDIRECT_URL);
+
+    logJoin(userId).catch((err) => {
+      console.error("SQLite logJoin fejl:", err);
+    });
 
     // Returnér userId og position, så vi kan inspicere i tests
     res.status(201).json({ ok: true, userId, position });

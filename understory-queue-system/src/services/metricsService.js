@@ -52,9 +52,8 @@ export function logCompletedUser(userId) {
   });
 }
 
-// Hent aggregerede metrics for i dag
-export function getTodayMetrics() {
-    return new Promise((resolve, reject) => {
+export async function getTodayMetrics() {
+    const { joins, completed, queueLength } = await new Promise((resolve, reject) => {
       db.all(
         `
         SELECT event, COUNT(*) as count
@@ -74,13 +73,55 @@ export function getTodayMetrics() {
             else if (row.event === "completed") completed = row.count;
           }
   
-          const queueLength = Math.max(joins - completed, 0);
-  
           resolve({
             joins,
             completed,
-            queueLength,
+            queueLength: Math.max(joins - completed, 0),
           });
+        }
+      );
+    });
+  
+    const avgWait = await getTodayAvgWait();
+  
+    return { joins, completed, queueLength, avgWait };
+  }
+
+  // Beregn gennemsnitlig ventetid i sekunder for i dag
+export function getTodayAvgWait() {
+    return new Promise((resolve, reject) => {
+      db.all(
+        `
+        SELECT j.userId, j.timestamp AS joinTime, c.timestamp AS completedTime
+        FROM queue_metrics j
+        JOIN queue_metrics c
+          ON j.userId = c.userId
+         AND j.event = 'join'
+         AND c.event = 'completed'
+        WHERE DATE(j.timestamp, 'localtime') = DATE('now', 'localtime')
+          AND DATE(c.timestamp, 'localtime') = DATE('now', 'localtime')
+        `,
+        [],
+        (err, rows) => {
+          if (err) return reject(err);
+  
+          if (!rows || rows.length === 0) return resolve(null);
+  
+          const waits = rows
+            .map((r) => {
+              const joinTs = new Date(r.joinTime).getTime();
+              const completeTs = new Date(r.completedTime).getTime();
+              return (completeTs - joinTs) / 1000; // sekunder
+            })
+            .filter((s) => s > 0);
+  
+          if (waits.length === 0) return resolve(null);
+  
+          const avgSec = Math.round(
+            waits.reduce((a, b) => a + b, 0) / waits.length
+          );
+  
+          resolve(avgSec);
         }
       );
     });

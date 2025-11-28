@@ -58,14 +58,14 @@ export async function sendSmsStatus(req, res) {
 // Hent dashboard-metrics til admin (fra SQLite)
 export async function getDashboardData(req, res) {
   try {
-    const { joins, completed, queueLength } = await getTodayMetrics();
+    const { joins, completed, queueLength, avgWait } = await getTodayMetrics();
 
     res.json({
-      queueLength,
-      avgWait: null,      // vi kan beregne rigtig ventetid senere
-      totalUsers: joins,  // "totale brugere i dag"
-      completed,
-    });
+  queueLength,
+  avgWait,
+  totalUsers: joins,
+  completed,
+});
   } catch (err) {
     console.error("Dashboard metrics fejl:", err.message);
     res.status(500).json({ error: "Kunne ikke hente metrics" });

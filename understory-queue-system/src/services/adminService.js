@@ -17,12 +17,13 @@ const client = twilio(
 // Funktion til at sende status-SMS til admin
 export async function sendStatusSms() {
   // Hent dagens metrics fra SQLite
-  const { joins, completed, queueLength } = await getTodayMetrics();
+  const { joins, completed, queueLength, avgWait } = await getTodayMetrics();
 
-  const text = `Understory status (i dag):
+const text = `Understory status (i dag):
 - Kølængde lige nu: ${queueLength}
-- Brugere i kø i dag: ${joins}
-- Færdigbehandlede brugere: ${completed}`;
+- Totale brugere i dag: ${joins}
+- Færdigbehandlede: ${completed}
+- Gns. ventetid: ${avgWait ?? 'N/A'} sek`;
 
   const msg = await client.messages.create({
     body: text,

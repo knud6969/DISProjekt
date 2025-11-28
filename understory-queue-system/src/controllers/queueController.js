@@ -1,19 +1,27 @@
 // src/controllers/queueController.js
+
 // Importer nødvendige modeller og Redis-klienten
-import { enqueueIfAbsent, getStatus, issueOneTimeToken, claimToken } from "../models/queueModel.js";
+import {
+  enqueueIfAbsent,
+  getStatus,
+  issueOneTimeToken,
+  claimToken,
+} from "../models/queueModel.js";
 import { redis } from "../config/redisClient.js";
 import { randomUUID } from "crypto";
-import { logJoin } from "../services/metricsService.js"; 
-
 
 // Standard redirect-URL hvis ikke angivet i miljøvariabler
-const REDIRECT_URL = process.env.QUEUE_REDIRECT_URL || "https://lamineyamalerenwanker.app";
+const REDIRECT_URL =
+  process.env.QUEUE_REDIRECT_URL || "https://lamineyamalerenwanker.app";
 
 // Test endpoint: sæt bruger som ready manuelt
 export async function forceReady(req, res) {
   try {
     const { userId } = req.params;
-    await redis.hset(`queue:user:${userId}`, { status: "ready", redirectUrl: REDIRECT_URL });
+    await redis.hset(`queue:user:${userId}`, {
+      status: "ready",
+      redirectUrl: REDIRECT_URL,
+    });
     res.json({ ok: true, forced: userId });
   } catch (err) {
     console.error("forceReady error:", err);
@@ -35,11 +43,7 @@ export async function joinQueue(req, res) {
 
     const position = await enqueueIfAbsent(userId, REDIRECT_URL);
 
-    // Log join asynkront – men lad aldrig metrics vælte API'et
-    logJoin().catch((err) =>
-      console.error("metrics logJoin fejl (ignoreret):", err.message)
-    );
-
+    // Returnér userId og position, så vi kan inspicere i tests
     res.status(201).json({ ok: true, userId, position });
   } catch (err) {
     console.error("joinQueue error:", err);
@@ -74,7 +78,9 @@ export async function getQueueStatus(req, res) {
         process.env.QUEUE_REDIRECT_URL ||
         "https://lamineyamalerenwanker.app/done";
 
-      console.log(`Bruger ${userId} er klar – udsteder token og redirecter til ${redirectUrl}`);
+      console.log(
+        `Bruger ${userId} er klar – udsteder token og redirecter til ${redirectUrl}`,
+      );
 
       return res.status(200).json({
         ready: true,
@@ -119,7 +125,9 @@ export async function claim(req, res) {
       process.env.QUEUE_REDIRECT_URL ||
       "https://lamineyamalerenwanker.app/done";
 
-    console.log(`➡️  Token godkendt for ${result.userId}, redirecter til ${redirectUrl}`);
+    console.log(
+      `➡️  Token godkendt for ${result.userId}, redirecter til ${redirectUrl}`,
+    );
     res.redirect(302, redirectUrl);
   } catch (err) {
     console.error("claim error:", err);
